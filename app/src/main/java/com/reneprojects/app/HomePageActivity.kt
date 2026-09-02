@@ -1,4 +1,4 @@
-package com.reneprojects
+package com.reneprojects.app
 
 import android.os.Bundle
 import android.widget.Toast
@@ -30,17 +30,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.reneprojects.core.feature.products.remote.api.ProductsApiService
+import com.reneprojects.core.feature.products.remote.dto.ProductDto
 import com.reneprojects.ui.theme.RenEcommerceTheme
+import dagger.hilt.android.AndroidEntryPoint
+import jakarta.inject.Inject
 
-class HomePageActivity : ComponentActivity() {
+@AndroidEntryPoint
+internal class HomePageActivity : ComponentActivity() {
+    @Inject
+    lateinit var productsApiService: ProductsApiService
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            var productList: List<Product> by remember { mutableStateOf(emptyList()) }
+            var productList: List<ProductDto> by remember { mutableStateOf(emptyList()) }
             LaunchedEffect(Unit) {
                 try {
-                    productList = RetrofitClient.retrofitService.getProductResponse().products
+                    productList = productsApiService.getProductResponse().products
                 } catch (e: Exception) {
                     Toast.makeText(
                         this@HomePageActivity, "Error trying to fetch Content, Cause: ${e.message}",
@@ -61,14 +69,14 @@ class HomePageActivity : ComponentActivity() {
 }
 
 @Composable
-private fun PageContent(productList: List<Product>, modifier: Modifier = Modifier) {
+private fun PageContent(productList: List<ProductDto>, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier,
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally,
 
         ) {
-        items(items = productList, key = { it.id }) { product ->
+        items(items = productList, key = { it.id ?: 0 }) { product ->
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -84,7 +92,7 @@ private fun PageContent(productList: List<Product>, modifier: Modifier = Modifie
                     )
                     Text(
                         modifier = Modifier.padding(horizontal = 16.dp),
-                        text = product.title, style = MaterialTheme.typography.titleLarge
+                        text = product.title.orEmpty(), style = MaterialTheme.typography.titleLarge
                     )
                     Text(
                         modifier = Modifier.padding(horizontal = 16.dp),
