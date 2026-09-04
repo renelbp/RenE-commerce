@@ -30,8 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.reneprojects.core.feature.products.remote.api.ProductsApiService
-import com.reneprojects.core.feature.products.remote.dto.ProductDto
+import com.reneprojects.core.feature.products.local.entity.ProductEntity
+import com.reneprojects.core.feature.products.repository.ProductRepository
 import com.reneprojects.ui.theme.RenEcommerceTheme
 import dagger.hilt.android.AndroidEntryPoint
 import jakarta.inject.Inject
@@ -39,16 +39,20 @@ import jakarta.inject.Inject
 @AndroidEntryPoint
 internal class HomePageActivity : ComponentActivity() {
     @Inject
-    lateinit var productsApiService: ProductsApiService
+    lateinit var productRepository: ProductRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContent {
-            var productList: List<ProductDto> by remember { mutableStateOf(emptyList()) }
+            var productList: List<ProductEntity> by remember { mutableStateOf(emptyList()) }
             LaunchedEffect(Unit) {
                 try {
-                    productList = productsApiService.getProductResponse().products
+                    productRepository.loadProductData()
+                    productRepository.observeProducts().collect {
+                        productList = it
+                    }
                 } catch (e: Exception) {
                     Toast.makeText(
                         this@HomePageActivity, "Error trying to fetch Content, Cause: ${e.message}",
@@ -69,7 +73,7 @@ internal class HomePageActivity : ComponentActivity() {
 }
 
 @Composable
-private fun PageContent(productList: List<ProductDto>, modifier: Modifier = Modifier) {
+private fun PageContent(productList: List<ProductEntity>, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier,
         verticalArrangement = Arrangement.Top,
