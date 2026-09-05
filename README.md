@@ -21,11 +21,9 @@ The application follows a layered, modularized architecture built around the fol
 
 ### Current Status
 
-![Current Home](assets/screenshots/current-home.png)
-
-### Goal / Final Target Design
-
-![Goal Home](assets/screenshots/goal-home.png)
+|                        Current Status                        |                         Goal / Final Target Design                         |
+|:------------------------------------------------------------:|:--------------------------------------------------------------------------:|
+| ![Current Home](.github/assets/screenshots/current-home.png) |           ![Goal Home](.github/assets/screenshots/goal-home.png)           |
 
 
 ## Technical Stack
