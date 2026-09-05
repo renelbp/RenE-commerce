@@ -17,6 +17,17 @@ The application follows a layered, modularized architecture built around the fol
 - Dependency injection is managed using Hilt
 - Product data is cached using a custom Room-backed cache manager
 
+## Project Status
+
+### Current Status
+
+![Current Home](assets/screenshots/current-home.png)
+
+### Goal / Final Target Design
+
+![Goal Home](assets/screenshots/goal-home.png)
+
+
 ## Technical Stack
 
 - Kotlin
@@ -178,12 +189,6 @@ RenEcommerce/
 - JDK 11+
 - Android SDK configured for API 24+
 
-### Commands
-
-```bash
-./gradlew assembleDebug
-```
-
 Then run the app in Android Studio using an emulator or physical device.
 
 ## Code Quality Notes
@@ -203,25 +208,24 @@ The project uses standard Android engineering practices, including:
 - Hilt was selected to keep dependency wiring clean and consistent with Android app architecture
 - Cache validation was implemented to support both freshness checks and offline resilience
 
-## Limitations
+## Development Roadmap / Pending Tasks
 
-This project is currently focused on the product catalog flow and does not yet include advanced commerce features such as:
+### 🟢 Completed
+- [x] Initial project setup and base architecture.
+- [x] E-commerce home/catalog initial implementation.
 
-- cart management
-- user authentication
-- checkout flow
-- product detail navigation
-- search and filtering
-- payment integration
+### 🟡 In Progress / Next Sprint
+- [ ] Splash landing page.
+- [ ] Product Details feature.
 
-## Conclusion
-
-RenE-commerce is a modern Android project that demonstrates a structured, maintainable, and production-aware approach to mobile application development. It combines Jetpack Compose, Hilt, Retrofit, Room, and Flow-based state management to create a clean architecture that is easy to extend and suitable for real-world product development.
-
-This project highlights my ability to build scalable mobile experiences with thoughtful architecture and practical engineering decisions.
+### 🔴 Pending / To-Do
+- [ ] User authentication feature (Login / Register).
+- [ ] Cart feature.
+- [ ] Order flow feature.
+- [ ] Unit testing implementation (ViewModels, Repositories, and Use Cases).
 
 ## Contact
 
-- GitHub: [Your GitHub Profile]
-- LinkedIn: [Your LinkedIn Profile]
-- Email: [Your Email]
+- GitHub: https://github.com/renelbp
+- LinkedIn: https://www.linkedin.com/in/rene-martinez-b12b58123/
+- Email: rene.martinez@outlook.com
