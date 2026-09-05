@@ -1,37 +1,17 @@
 package com.reneprojects.app
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import com.reneprojects.core.feature.products.local.entity.ProductEntity
 import com.reneprojects.core.feature.products.repository.ProductRepository
+import com.reneprojects.feature.products.ui.PageContent
+import com.reneprojects.feature.products.viewmodel.ProductViewModelImpl
 import com.reneprojects.ui.theme.RenEcommerceTheme
 import dagger.hilt.android.AndroidEntryPoint
 import jakarta.inject.Inject
@@ -40,69 +20,20 @@ import jakarta.inject.Inject
 internal class HomePageActivity : ComponentActivity() {
     @Inject
     lateinit var productRepository: ProductRepository
+    private val viewModel: ProductViewModelImpl by viewModels()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
         setContent {
-            var productList: List<ProductEntity> by remember { mutableStateOf(emptyList()) }
-            LaunchedEffect(Unit) {
-                try {
-                    productRepository.loadProductData()
-                    productRepository.observeProducts().collect {
-                        productList = it
-                    }
-                } catch (e: Exception) {
-                    Toast.makeText(
-                        this@HomePageActivity, "Error trying to fetch Content, Cause: ${e.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
             RenEcommerceTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     PageContent(
-                        productList = productList,
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding),
+                        viewModel = viewModel
                     )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PageContent(productList: List<ProductEntity>, modifier: Modifier = Modifier) {
-    LazyColumn(
-        modifier,
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally,
-
-        ) {
-        items(items = productList, key = { it.id ?: 0 }) { product ->
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Card(
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    AsyncImage(
-                        modifier = Modifier.fillMaxWidth(),
-                        model = product.thumbnail,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop
-                    )
-                    Text(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        text = product.title.orEmpty(), style = MaterialTheme.typography.titleLarge
-                    )
-                    Text(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        text = "$${product.price}", style = MaterialTheme.typography.titleMedium
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
