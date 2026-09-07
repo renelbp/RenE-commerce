@@ -47,11 +47,11 @@ internal fun ProductsSection(
                     )
                     Text(
                         modifier = Modifier.padding(horizontal = 16.dp),
-                        text = product.title.orEmpty(), style = MaterialTheme.typography.titleLarge
+                        text = product.title, style = MaterialTheme.typography.titleLarge
                     )
                     Text(
                         modifier = Modifier.padding(horizontal = 16.dp),
-                        text = "$${product.formattedPrice}",
+                        text = product.formattedPrice,
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.height(16.dp))
