@@ -1,8 +1,9 @@
-package com.reneprojects.feature.products.interactor
+package com.reneprojects.feature.products.domain.interactor
 
+import com.reneprojects.core.common.result.RenEcommerceResult
 import com.reneprojects.core.feature.products.repository.ProductRepository
-import com.reneprojects.feature.products.mapper.ProductUiMapper
-import com.reneprojects.feature.products.model.ProductUiModel
+import com.reneprojects.feature.products.domain.mapper.ProductUiMapper
+import com.reneprojects.feature.products.model.Product
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -23,9 +24,9 @@ internal interface ProductsInteractorModule {
 }
 
 internal interface ProductsInteractor {
-    fun observeProducts(): Flow<List<ProductUiModel>>
+    fun observeProducts(): Flow<List<Product>>
 
-    suspend fun loadProductData(forceRefresh: Boolean)
+    suspend fun loadProductData(forceRefresh: Boolean): RenEcommerceResult<Unit>
 }
 
 internal class ProductsInteractorImpl @Inject constructor(
@@ -33,7 +34,7 @@ internal class ProductsInteractorImpl @Inject constructor(
     private val mapper: ProductUiMapper
 ) :
     ProductsInteractor {
-    override fun observeProducts(): Flow<List<ProductUiModel>> {
+    override fun observeProducts(): Flow<List<Product>> {
         return repository.observeProducts().map {
             it.map { entity ->
                 mapper.toProductUiModel(entity = entity)
@@ -41,8 +42,8 @@ internal class ProductsInteractorImpl @Inject constructor(
         }
     }
 
-    override suspend fun loadProductData(forceRefresh: Boolean) {
-        repository.loadProductData()
+    override suspend fun loadProductData(forceRefresh: Boolean): RenEcommerceResult<Unit> {
+        return repository.loadProductData(forceRefresh = forceRefresh)
     }
 
 }

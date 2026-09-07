@@ -1,5 +1,6 @@
 package com.reneprojects.core.feature.products.repository
 
+import com.reneprojects.core.common.result.RenEcommerceResult
 import com.reneprojects.core.common.cachemanager.manager.CacheManager
 import com.reneprojects.core.common.cachemanager.model.CacheStatus
 import com.reneprojects.core.common.constants.CacheKeys
@@ -8,14 +9,13 @@ import com.reneprojects.core.feature.products.local.dao.ProductDao
 import com.reneprojects.core.feature.products.local.entity.ProductEntity
 import com.reneprojects.core.feature.products.mapper.ProductEntityMapper
 import com.reneprojects.core.feature.products.mapper.ProductEntityMapperModule
-import com.reneprojects.core.feature.products.remote.api.ProductsApiService
+import com.reneprojects.core.feature.products.remote.datasource.ProductsRemoteDataSource
+import com.reneprojects.core.feature.products.remote.datasource.ProductsRemoteResult
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.Flow
-import okio.IOException
-import retrofit2.HttpException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,57 +35,69 @@ internal interface ProductRepositoryModule {
 
 interface ProductRepository {
     fun observeProducts(): Flow<List<ProductEntity>>
-    suspend fun loadProductData(forceRefresh: Boolean = false)
+    suspend fun loadProductData(forceRefresh: Boolean = false): RenEcommerceResult<Unit>
 }
 
 internal class ProductRepositoryImpl @Inject constructor(
-    private val apiService: ProductsApiService,
+    private val remoteDataSource: ProductsRemoteDataSource,
     private val productDao: ProductDao,
     private val cacheManager: CacheManager,
     private val productEntityMapper: ProductEntityMapper
 
 ) : ProductRepository {
-    override fun observeProducts(): Flow<List<ProductEntity>> = productDao.observeProducts()
+    override fun observeProducts(): Flow<List<ProductEntity>> {
+        return productDao.observeProducts()
+    }
 
-    override suspend fun loadProductData(forceRefresh: Boolean) {
+    override suspend fun loadProductData(forceRefresh: Boolean): RenEcommerceResult<Unit> {
         val cacheKey = CacheKeys.PRODUCTS
-        val cacheStatus: CacheStatus = cacheManager.getStatus(cacheKey = cacheKey)
+        val cacheStatus = cacheManager.getStatus(cacheKey)
 
-        if (!forceRefresh && cacheStatus.isValid) return
+        if (!forceRefresh && cacheStatus.isValid) {
+            return RenEcommerceResult.Success(Unit)
+        }
 
-        try {
-            val response = apiService.getProductResponse(eTag = cacheStatus.eTag)
-            when {
-                // Not Modified
-                response.code() == 304 -> {
-                    cacheManager.updateCache(
-                        key = cacheKey,
-                        expirationTimeMillis = CachePolicy.PRODUCTS_TTL, eTag = cacheStatus.eTag
-                    )
-                }
+        return updateProducts(
+            cacheKey = cacheKey,
+            cacheStatus = cacheStatus
+        )
+    }
 
-                response.isSuccessful -> {
-                    val productsResponseDto = response.body() ?: throw IllegalStateException(
-                        "Empty Products Response"
-                    )
-                    val productsEntities = productsResponseDto.products.map {
-                        productEntityMapper.toProductEntity(it)
-                    }
-                    productDao.replaceProducts(products = productsEntities)
-                    cacheManager.updateCache(
-                        key = cacheKey,
-                        expirationTimeMillis = CachePolicy.PRODUCTS_TTL,
-                        eTag = response.headers()["ETag"]
-                    )
-                }
-
-                else -> {
-                    throw HttpException(response)
-                }
+    private suspend fun updateProducts(
+        cacheKey: String,
+        cacheStatus: CacheStatus
+    ): RenEcommerceResult<Unit> {
+        return when (val remoteResult = remoteDataSource.fetchProducts(eTag = cacheStatus.eTag)) {
+            is ProductsRemoteResult.NotModified -> {
+                cacheManager.updateCache(
+                    key = cacheKey,
+                    expirationTimeMillis = CachePolicy.PRODUCTS_TTL,
+                    eTag = cacheStatus.eTag
+                )
+                RenEcommerceResult.Success(Unit)
             }
-        } catch (exception: IOException) {
-            if (productDao.getProducts().isEmpty()) {
-                throw exception
+
+            is ProductsRemoteResult.Success -> {
+                val productEntities = remoteResult.products.map {
+                    productEntityMapper.toProductEntity(it)
+                }
+
+                productDao.replaceProducts(
+                    products = productEntities
+                )
+
+                cacheManager.updateCache(
+                    key = cacheKey,
+                    expirationTimeMillis = CachePolicy.PRODUCTS_TTL,
+                    eTag = remoteResult.eTag
+                )
+                RenEcommerceResult.Success(Unit)
+            }
+
+            is ProductsRemoteResult.Error -> {
+                RenEcommerceResult.Error(
+                    exception = Exception("Error ${remoteResult.code}: ${remoteResult.message}")
+                )
             }
         }
     }

@@ -18,11 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.reneprojects.feature.products.model.ProductUiModel
+import com.reneprojects.feature.products.model.Product
 
 @Composable
 internal fun ProductsSection(
-    productList: List<ProductUiModel>,
+    productList: List<Product>,
     modifier: Modifier,
 ) {
     LazyColumn(

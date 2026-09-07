@@ -1,8 +1,8 @@
-package com.reneprojects.feature.products.mapper
+package com.reneprojects.feature.products.domain.mapper
 
 import com.reneprojects.utils.extension.toPriceString
 import com.reneprojects.core.feature.products.local.entity.ProductEntity
-import com.reneprojects.feature.products.model.ProductUiModel
+import com.reneprojects.feature.products.model.Product
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -17,17 +17,18 @@ internal interface ProductUiMapperModule {
 }
 
 internal interface ProductUiMapper {
-    fun toProductUiModel(entity: ProductEntity): ProductUiModel
+    fun toProductUiModel(entity: ProductEntity): Product
 }
 
 internal class ProductUiMapperIMPL @Inject constructor() : ProductUiMapper {
-    override fun toProductUiModel(entity: ProductEntity): ProductUiModel =
+    override fun toProductUiModel(entity: ProductEntity): Product =
         with(entity) {
-            ProductUiModel(
+            Product(
                 id = id,
                 title = title,
                 formattedPrice = price.toPriceString(),
-                imageUrl = thumbnail
+                imageUrl = thumbnail,
+                category = category
             )
         }
 }

@@ -1,11 +1,11 @@
-package com.reneprojects.feature.products.viewmodel
+package com.reneprojects.feature.products.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.reneprojects.feature.products.interactor.ProductsInteractor
+import com.reneprojects.core.common.result.RenEcommerceResult
+import com.reneprojects.feature.products.domain.interactor.ProductsInteractor
 import com.reneprojects.feature.products.model.ProductsUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,16 +44,7 @@ internal class ProductViewModelImpl @Inject constructor(
                 currentState.copy(products = products)
             }
         }.catch { error ->
-            if (error is CancellationException) {
-                throw error
-            }
-            _uiState.update { currentState ->
-                currentState.copy(
-                    isLoading = false,
-                    isRefreshing = false,
-                    errorMessage = error.message ?: "Unable to get load Products"
-                )
-            }
+            updateErrorState(error.message ?: "Unable to get load Products")
         }.launchIn(viewModelScope)
     }
 
@@ -63,32 +54,14 @@ internal class ProductViewModelImpl @Inject constructor(
         }
 
         loadProductsJob = viewModelScope.launch {
-            updateLoadingState(forceRefresh)
+            updateLoadingState()
 
-            try {
-                interactor.loadProductData(
-                    forceRefresh = forceRefresh,
-                )
-            } catch (error: CancellationException) {
-                throw error
-            } catch (error: Exception) {
-                updateErrorState(
-                    message = error.message
-                        ?: getDefaultErrorMessage(forceRefresh),
-                )
-            } finally {
-                finishLoading()
+            val result = interactor.loadProductData(forceRefresh = forceRefresh)
+
+            if (result is RenEcommerceResult.Error) {
+                updateErrorState(message = result.message)
             }
-        }
-    }
-
-    private fun getDefaultErrorMessage(
-        forceRefresh: Boolean,
-    ): String {
-        return if (forceRefresh) {
-            "No fue posible actualizar los productos."
-        } else {
-            "No fue posible cargar los productos. Revisa tu conexión."
+            finishLoading()
         }
     }
 
@@ -97,21 +70,16 @@ internal class ProductViewModelImpl @Inject constructor(
     ) {
         _uiState.update { currentState ->
             currentState.copy(
-                errorMessage = message,
+                isLoading = false,
+                errorMessage = message
             )
         }
     }
 
-    private fun updateLoadingState(
-        forceRefresh: Boolean,
-    ) {
+    private fun updateLoadingState() {
         _uiState.update { currentState ->
             currentState.copy(
-
-                isLoading =
-                    !forceRefresh &&
-                            currentState.products.isEmpty(),
-                isRefreshing = forceRefresh,
+                isLoading = true,
                 errorMessage = null,
             )
         }
@@ -119,10 +87,7 @@ internal class ProductViewModelImpl @Inject constructor(
 
     private fun finishLoading() {
         _uiState.update { currentState ->
-            currentState.copy(
-                isLoading = false,
-                isRefreshing = false,
-            )
+            currentState.copy(isLoading = false)
         }
     }
 

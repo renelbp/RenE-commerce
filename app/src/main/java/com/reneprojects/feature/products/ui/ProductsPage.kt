@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.reneprojects.feature.products.viewmodel.ProductViewModel
+import com.reneprojects.feature.products.ui.viewmodel.ProductViewModel
 
 @Composable
 internal fun PageContent(
