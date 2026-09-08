@@ -13,8 +13,8 @@ internal fun PageContent(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when {
-        uiState.products.isNotEmpty() -> {
-            ProductsSection(modifier = modifier, productList = uiState.products)
+        uiState.productCarousels.isNotEmpty() -> {
+            ProductsSection(modifier = modifier, productCarousels = uiState.productCarousels)
         }
     }
 

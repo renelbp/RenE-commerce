@@ -2,6 +2,7 @@ package com.reneprojects.core.feature.products.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.reneprojects.feature.products.model.Product
 
 @Entity(tableName = "products")
 data class ProductEntity(

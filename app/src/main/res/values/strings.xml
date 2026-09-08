@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">RenE-commerce</string>
+    <string name="ren_ecomme_carousel_view_all_label">View All</string>
 </resources>

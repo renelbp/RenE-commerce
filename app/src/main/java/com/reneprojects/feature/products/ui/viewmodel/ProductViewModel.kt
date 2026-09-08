@@ -39,9 +39,9 @@ internal class ProductViewModelImpl @Inject constructor(
     }
 
     private fun observeProducts() {
-        interactor.observeProducts().onEach { products ->
+        interactor.observeProductSections().onEach { sections ->
             _uiState.update { currentState ->
-                currentState.copy(products = products)
+                currentState.copy(productCarousels = sections)
             }
         }.catch { error ->
             updateErrorState(error.message ?: "Unable to get load Products")
