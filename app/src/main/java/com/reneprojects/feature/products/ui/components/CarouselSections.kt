@@ -14,7 +14,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,17 +61,24 @@ private fun CarouselHeader(section: ProductCarousel) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         val linkButtonLabel = stringResource(R.string.ren_ecomme_carousel_view_all_label)
-        Text(text = section.header.label, style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = section.header.label.replaceFirstChar { it.uppercase() },
+            style = typography.titleLarge
+        )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = linkButtonLabel, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = linkButtonLabel,
+                style = typography.titleMedium,
+                color = colorScheme.primary
+            )
             Icon(
                 painter = painterResource(id = R.drawable.ic_right_arrow_next), // or Icons.Filled.Add, Icons.Rounded.Menu
                 contentDescription = "Home Icon",
                 modifier = Modifier.size(12.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = colorScheme.primary
             )
         }
     }
@@ -80,7 +88,7 @@ private fun CarouselHeader(section: ProductCarousel) {
 private fun ProductCard(product: Product) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = colorScheme.surface,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     )
@@ -98,7 +106,7 @@ private fun ProductCard(product: Product) {
             Text(
                 modifier = Modifier.padding(horizontal = 8.dp),
                 text = product.title,
-                style = MaterialTheme.typography.titleMedium,
+                style = typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -107,7 +115,8 @@ private fun ProductCard(product: Product) {
             Text(
                 modifier = Modifier.padding(horizontal = 8.dp),
                 text = product.formattedPrice,
-                style = MaterialTheme.typography.bodyMedium
+                style = typography.titleMedium,
+                color = colorScheme.primary
             )
             Spacer(modifier = Modifier.height(4.dp))
 
@@ -135,7 +144,7 @@ fun ProductCarouselsPreview() {
         Surface() {
             CarouselSection(
                 ProductCarousel(
-                    header = CarouselHeader("Cellphones", linkId = 1),
+                    header = CarouselHeader("cellphones", linkId = 1),
                     products = productList
                 )
             )
