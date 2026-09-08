@@ -15,6 +15,7 @@ internal sealed interface ProductsRemoteResult {
     data class Error(val code: Int, val message: String) : ProductsRemoteResult
 }
 
+/** region module */
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface ProductsRemoteDataSourceModule {
@@ -24,11 +25,21 @@ internal interface ProductsRemoteDataSourceModule {
         implementation: ProductsRemoteDataSourceImpl
     ): ProductsRemoteDataSource
 }
+/** endregion module */
 
+/** region abstraction */
 internal interface ProductsRemoteDataSource {
+    /**
+     * Fetches products from the remote API using an optional ETag for caching.
+     *
+     * @param eTag The ETag of the last successful fetch.
+     * @return A [ProductsRemoteResult] wrapping the API response.
+     */
     suspend fun fetchProducts(eTag: String?): ProductsRemoteResult
 }
+/** endregion abstraction */
 
+/** region implementation */
 internal class ProductsRemoteDataSourceImpl @Inject constructor(
     private val apiService: ProductsApiService
 ) : ProductsRemoteDataSource {
@@ -72,3 +83,4 @@ internal class ProductsRemoteDataSourceImpl @Inject constructor(
         }
     }
 }
+/** endregion implementation */

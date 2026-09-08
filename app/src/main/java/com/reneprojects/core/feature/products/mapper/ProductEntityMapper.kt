@@ -9,6 +9,7 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** region module */
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface ProductEntityMapperModule {
@@ -18,11 +19,21 @@ internal interface ProductEntityMapperModule {
         implementation: ProductEntityMapperImpl
     ): ProductEntityMapper
 }
+/** endregion module */
 
+/** region abstraction */
 internal interface ProductEntityMapper {
+    /**
+     * Maps a [ProductDto] received from the network to a [ProductEntity] for local storage.
+     *
+     * @param dto The data transfer object from the API.
+     * @return A database-ready entity.
+     */
     fun toProductEntity(dto: ProductDto): ProductEntity
 }
+/** endregion abstraction */
 
+/** region implementation */
 internal class ProductEntityMapperImpl @Inject constructor() : ProductEntityMapper {
     override fun toProductEntity(dto: ProductDto): ProductEntity {
         return ProductEntity(
@@ -40,3 +51,4 @@ internal class ProductEntityMapperImpl @Inject constructor() : ProductEntityMapp
     }
 
 }
+/** endregion implementation */

@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** region module */
 @Module(
     includes = [
         ProductEntityMapperModule::class
@@ -32,12 +33,16 @@ internal interface ProductRepositoryModule {
         implementation: ProductRepositoryImpl
     ): ProductRepository
 }
+/** endregion module */
 
+/** region abstraction */
 interface ProductRepository {
     fun observeProducts(): Flow<List<ProductEntity>>
     suspend fun loadProductData(forceRefresh: Boolean = false): RenEcommerceResult<Unit>
 }
+/** endregion abstraction */
 
+/** region implementation */
 internal class ProductRepositoryImpl @Inject constructor(
     private val remoteDataSource: ProductsRemoteDataSource,
     private val productDao: ProductDao,
@@ -63,6 +68,19 @@ internal class ProductRepositoryImpl @Inject constructor(
         )
     }
 
+    /**
+     * Synchronizes local products with the remote response using `ETag`\-based cache control.
+     *
+     * Behavior:
+     * \- `NotModified`: refreshes cache validity without changing local data.
+     * \- `Success`: maps and replaces local products, then updates cache metadata.
+     * \- `Error`: returns a failure with the remote code and message.
+     *
+     * @param cacheKey Cache key for products.
+     * @param cacheStatus Current cache status, including validity and `ETag`.
+     * @return `RenEcommerceResult.Success(Unit)` when synchronization or cache renewal succeeds;
+     * `RenEcommerceResult.Error` when the remote request fails.
+     */
     private suspend fun updateProducts(
         cacheKey: String,
         cacheStatus: CacheStatus
@@ -102,3 +120,4 @@ internal class ProductRepositoryImpl @Inject constructor(
         }
     }
 }
+/** endregion implementation */

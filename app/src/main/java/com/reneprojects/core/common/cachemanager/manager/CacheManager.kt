@@ -12,6 +12,7 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** region module */
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface CacheManagerModule {
@@ -27,19 +28,46 @@ internal interface CacheManagerModule {
         implementation: TimeProviderImpl
     ): TimeProvider
 }
+/** endregion module */
 
+/** region abstraction */
 internal interface CacheManager {
+    /**
+     * Returns the current status of the cache for the given key.
+     *
+     * @param cacheKey key for the cached data.
+     * @return A [CacheStatus] object representing the cache state.
+     */
     suspend fun getStatus(cacheKey: String): CacheStatus
+
+    /**
+     * Updates or creates a cache entry with the specified metadata.
+     *
+     * @param key The unique key for the cached data.
+     * @param expirationTimeMillis The duration in milliseconds for which the cache is valid.
+     * @param eTag Optional ETag for conditional HTTP requests.
+     */
     suspend fun updateCache(
         key: String,
         expirationTimeMillis: Long,
         eTag: String?
     )
 
+    /**
+     * Manually invalidates a specific cache entry.
+     *
+     * @param key The key of the entry to invalidate.
+     */
     suspend fun invalidate(key: String)
+
+    /**
+     * Clears all entries from the cache metadata.
+     */
     suspend fun clear()
 }
+/** endregion abstraction */
 
+/** region implementation */
 internal class CacheManagerImpl @Inject constructor(
     private val cacheMetadataDao: CacheMetadataDao,
     private val timeProvider: TimeProvider
@@ -94,3 +122,4 @@ internal class CacheManagerImpl @Inject constructor(
         cacheMetadataDao.deleteAll()
     }
 }
+/** endregion implementation */

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** region module */
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface ProductsInteractorModule {
@@ -22,13 +23,28 @@ internal interface ProductsInteractorModule {
         implementation: ProductsInteractorImpl
     ): ProductsInteractor
 }
+/** endregion module */
 
+/** region abstraction */
 internal interface ProductsInteractor {
+    /**
+     * Exposes a [Flow] of product carousels ready for the UI layer.
+     *
+     * @return A stream of product sections grouped by category.
+     */
     fun observeProductSections(): Flow<List<ProductCarousel>>
 
+    /**
+     * Requests a data refresh through the repository.
+     *
+     * @param forceRefresh Whether to bypass local cache validation.
+     * @return The result of the load operation.
+     */
     suspend fun loadProductData(forceRefresh: Boolean): RenEcommerceResult<Unit>
 }
+/** endregion abstraction */
 
+/** region implementation */
 internal class ProductsInteractorImpl @Inject constructor(
     private val repository: ProductRepository,
     private val mapper: ProductMapper
@@ -43,5 +59,5 @@ internal class ProductsInteractorImpl @Inject constructor(
     override suspend fun loadProductData(forceRefresh: Boolean): RenEcommerceResult<Unit> {
         return repository.loadProductData(forceRefresh = forceRefresh)
     }
-
 }
+/** endregion implementation */

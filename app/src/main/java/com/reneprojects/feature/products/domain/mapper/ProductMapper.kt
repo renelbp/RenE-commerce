@@ -11,18 +11,36 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
 
+/** region module */
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface ProductUiMapperModule {
     @Binds
     fun bindProductUiMapper(impl: ProductMapperImpl): ProductMapper
 }
+/** endregion module */
 
+/** region abstraction */
 internal interface ProductMapper {
+    /**
+     * Maps a database [ProductEntity] to a UI-friendly [Product] model.
+     *
+     * @param entity The source database entity.
+     * @return A mapped UI model.
+     */
     fun toProductUiModel(entity: ProductEntity): Product
+
+    /**
+     * Groups a list of [ProductEntity] into a list of [ProductCarousel] grouped by category.
+     *
+     * @param entities The list of products from the repository.
+     * @return A list of sections for display in the UI.
+     */
     fun toProductSections(entities: List<ProductEntity>): List<ProductCarousel>
 }
+/** endregion abstraction */
 
+/** region implementation */
 internal class ProductMapperImpl @Inject constructor() : ProductMapper {
     override fun toProductUiModel(entity: ProductEntity): Product =
         with(entity) {
@@ -48,3 +66,4 @@ internal class ProductMapperImpl @Inject constructor() : ProductMapper {
             }
     }
 }
+/** endregion implementation */
