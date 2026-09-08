@@ -1,8 +1,12 @@
 # RenE-commerce
 
-RenE-commerce is an Android application developed in Kotlin using Jetpack Compose for the UI layer. The app presents a product catalog fetched from a remote API, caches the response locally with Room, and applies a lightweight cache policy to minimize redundant network calls while improving perceived performance.
+RenE-commerce is an Android application developed in Kotlin using Jetpack Compose for the UI layer.
+The app presents a product catalog fetched from a remote API, caches the response locally with Room,
+and applies a lightweight cache policy to minimize redundant network calls while improving perceived
+performance.
 
-This project is designed to demonstrate a modern Android architecture pattern that balances maintainability, scalability, and production-oriented engineering practices.
+This project is designed to demonstrate a modern Android architecture pattern that balances
+maintainability, scalability, and production-oriented engineering practices.
 
 ## Project Summary
 
@@ -21,10 +25,9 @@ The application follows a layered, modularized architecture built around the fol
 
 ### Current Status
 
-|                        Current Status                        |                         Goal / Final Target Design                         |
-|:------------------------------------------------------------:|:--------------------------------------------------------------------------:|
-| ![Current Home](.github/assets/screenshots/current-home.png) |           ![Goal Home](.github/assets/screenshots/goal-home.png)           |
-
+|                        Current Status                        |                Goal / Final Target Design                |
+|:------------------------------------------------------------:|:--------------------------------------------------------:|
+| ![Current Home](.github/assets/screenshots/current-home.png) | <img src="assets/screenshots/goal-home.png" width="50%"> |
 
 ## Technical Stack
 
@@ -45,43 +48,56 @@ The application follows a layered, modularized architecture built around the fol
 The codebase is organized into clear layers to separate responsibilities:
 
 ### 1. UI Layer
-The UI layer is composed of `@Composable` screens and reusable components such as product cards and catalog sections.
+
+The UI layer is composed of `@Composable` screens and reusable components such as product cards and
+catalog sections.
 
 Relevant files:
+
 - `app/src/main/java/com/reneprojects/app/HomePageActivity.kt`
 - `app/src/main/java/com/reneprojects/feature/products/ui/ProductsPage.kt`
 - `app/src/main/java/com/reneprojects/feature/products/ui/ProductsSection.kt`
 
 ### 2. Presentation Layer
+
 UI state is exposed through a `ProductViewModel` and managed with `StateFlow`.
 
 Relevant files:
+
 - `app/src/main/java/com/reneprojects/feature/products/viewmodel/ProductViewModel.kt`
 - `app/src/main/java/com/reneprojects/feature/products/model/ProductUiState.kt`
 - `app/src/main/java/com/reneprojects/feature/products/model/ProductUiModel.kt`
 
 The ViewModel is responsible for:
+
 - listening to product updates from the interactor
 - triggering the initial loading flow
 - handling refresh and retry actions
 - updating UI state for loading, errors, and empty states
 
 ### 3. Domain / Interactor Layer
-The interactor layer sits between the UI and data access, converting repository data into UI-friendly models.
+
+The interactor layer sits between the UI and data access, converting repository data into
+UI-friendly models.
 
 Relevant files:
+
 - `app/src/main/java/com/reneprojects/feature/products/interactor/GetProductsInteractor.kt`
 - `app/src/main/java/com/reneprojects/feature/products/mapper/ProductUiMapper.kt`
 
 This layer keeps UI components decoupled from persistence and network implementation details.
 
 ### 4. Repository Layer
-The repository handles fetching data from the API and writing it to Room, while exposing flows for observing local product data.
+
+The repository handles fetching data from the API and writing it to Room, while exposing flows for
+observing local product data.
 
 Relevant file:
+
 - `app/src/main/java/com/reneprojects/core/feature/products/repository/ProductRepository.kt`
 
 Key responsibilities:
+
 - validate cache status
 - perform conditional requests using server ETag metadata
 - handle 304 Not Modified responses
@@ -89,48 +105,61 @@ Key responsibilities:
 - keep observable product data available to the UI through Room Flow APIs
 
 ### 5. Remote Data Layer
+
 API communication is implemented with Retrofit and a typed service interface.
 
 Relevant files:
+
 - `app/src/main/java/com/reneprojects/core/feature/products/remote/api/ProductsApiService.kt`
 - `app/src/main/java/com/reneprojects/core/feature/products/remote/dto/ProductDto.kt`
 - `app/src/main/java/com/reneprojects/core/feature/products/remote/dto/ProductsResponseDto.kt`
 
-The app consumes a product endpoint and maps the network response into Room entities through mapper logic.
+The app consumes a product endpoint and maps the network response into Room entities through mapper
+logic.
 
 ### 6. Persistence Layer
+
 Room is used for local storage and caching.
 
 Relevant files:
+
 - `app/src/main/java/com/reneprojects/core/database/RenEcommerceDatabase.kt`
 - `app/src/main/java/com/reneprojects/core/feature/products/local/entity/ProductEntity.kt`
 - `app/src/main/java/com/reneprojects/core/feature/products/local/dao/ProductDao.kt`
 
 Data design:
+
 - `products` table stores product metadata and values needed for the catalog UI
 - `ProductDao` includes flow-based read operations and transactional replacement operations
 - database schema is generated with Room and stored under the app `schemas` directory
 
 ### 7. Cache Management
-A custom cache manager provides TTL-based freshness checks and stores metadata such as expiration timestamps and ETags.
+
+A custom cache manager provides TTL-based freshness checks and stores metadata such as expiration
+timestamps and ETags.
 
 Relevant files:
+
 - `app/src/main/java/com/reneprojects/core/common/cachemanager/manager/CacheManager.kt`
 - `app/src/main/java/com/reneprojects/core/common/cachemanager/dao/CacheMetadataDao.kt`
 - `app/src/main/java/com/reneprojects/core/common/cachemanager/entity/CacheMetaDataEntity.kt`
 - `app/src/main/java/com/reneprojects/core/common/cachemanager/model/CacheStatus.kt`
 
-This allows the app to avoid unnecessary fetches while still being able to refresh data when the cache expires or when the user explicitly requests a refresh.
+This allows the app to avoid unnecessary fetches while still being able to refresh data when the
+cache expires or when the user explicitly requests a refresh.
 
 ## Dependency Injection
 
-Hilt is used to provide application-scoped dependencies for the network layer, database, repository, mapper, and interactor modules.
+Hilt is used to provide application-scoped dependencies for the network layer, database, repository,
+mapper, and interactor modules.
 
 Relevant files:
+
 - `app/src/main/java/com/reneprojects/core/di/NetworkModule.kt`
 - `app/src/main/java/com/reneprojects/core/di/DatabaseModule.kt`
 
-This approach reduces manual wiring, keeps the architecture modular, and makes the app easier to extend with additional features.
+This approach reduces manual wiring, keeps the architecture modular, and makes the app easier to
+extend with additional features.
 
 ## UI Behavior
 
@@ -149,7 +178,8 @@ Several production-oriented implementation decisions are included in this projec
 - Room-backed caching reduces repeated network usage
 - Flow-based observation keeps the UI synchronized with local data changes
 - ETag-aware API requests reduce unnecessary payload transfer
-- Local data is preserved when network requests fail, preventing a blank UI if cached content already exists
+- Local data is preserved when network requests fail, preventing a blank UI if cached content
+  already exists
 - UI loading state is derived from actual data availability rather than fixed placeholders
 
 ## Project Structure
@@ -209,14 +239,17 @@ The project uses standard Android engineering practices, including:
 ## Development Roadmap / Pending Tasks
 
 ### 🟢 Completed
+
 - [x] Initial project setup and base architecture.
 - [x] E-commerce home/catalog initial implementation.
 
 ### 🟡 In Progress / Next Sprint
+
 - [ ] Splash landing page.
 - [ ] Product Details feature.
 
 ### 🔴 Pending / To-Do
+
 - [ ] User authentication feature (Login / Register).
 - [ ] Cart feature.
 - [ ] Order flow feature.
