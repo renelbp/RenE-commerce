@@ -8,6 +8,5 @@ sealed interface RenEcommerceResult<out T> {
 
     data class Error(
         val exception: Throwable,
-        val message: String = exception.message ?: "Unknown error"
     ) : RenEcommerceResult<Nothing>
 }

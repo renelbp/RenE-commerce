@@ -13,6 +13,8 @@ import com.reneprojects.feature.products.ui.components.CarouselSection
 internal fun ProductsSection(
     productCarousels: List<ProductCarousel>,
     modifier: Modifier,
+    navigateToProductCategory: (Int) -> Unit,
+    navigateToProductDetails: (Int) -> Unit
 ) {
     LazyColumn(
         modifier,
@@ -20,8 +22,14 @@ internal fun ProductsSection(
         horizontalAlignment = Alignment.CenterHorizontally,
 
         ) {
-        items(items = productCarousels, key = { it.header.linkId }) { productCarousel ->
-            CarouselSection(section = productCarousel)
+        items(
+            items = productCarousels,
+            key = { it.header.label + it.header.linkId }) { productCarousel ->
+            CarouselSection(
+                section = productCarousel,
+                navigateToProductCategory = navigateToProductCategory,
+                navigateToProductDetails = navigateToProductDetails
+            )
         }
     }
 }

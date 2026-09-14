@@ -8,7 +8,9 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -51,9 +53,9 @@ internal class ProductsInteractorImpl @Inject constructor(
 ) : ProductsInteractor {
 
     override fun observeProductSections(): Flow<List<ProductCarousel>> {
-        return repository.observeProducts().map { entities ->
-            mapper.toProductSections(entities = entities)
-        }
+        return repository.observeProducts()
+            .map { entities -> mapper.toProductSections(entities) }
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun loadProductData(forceRefresh: Boolean): RenEcommerceResult<Unit> {

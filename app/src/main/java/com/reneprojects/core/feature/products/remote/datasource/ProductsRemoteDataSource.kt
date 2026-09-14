@@ -76,9 +76,10 @@ internal class ProductsRemoteDataSourceImpl @Inject constructor(
                 }
             }
         } catch (e: Exception) {
+            // Log technical error here if necessary
             ProductsRemoteResult.Error(
                 code = -1,
-                message = e.message ?: "Unknown error"
+                message = "Network or technical failure"
             )
         }
     }

@@ -1,7 +1,9 @@
 package com.reneprojects.feature.products.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,9 +23,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,17 +39,21 @@ import com.reneprojects.feature.products.model.ProductCarousel
 import com.reneprojects.ui.theme.RenEcommerceTheme
 
 @Composable
-internal fun CarouselSection(section: ProductCarousel) {
+internal fun CarouselSection(
+    section: ProductCarousel,
+    navigateToProductCategory: (Int) -> Unit,
+    navigateToProductDetails: (Int) -> Unit
+) {
     Column(modifier = Modifier.padding(vertical = 16.dp)) {
-        CarouselHeader(section)
+        CarouselHeader(section, navigateToProductCategory)
         Spacer(modifier = Modifier.height(8.dp))
         LazyRow(
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             items(section.products, key = { it.id }) {
-                ProductCard(product = it)
+                ProductCard(product = it, navigateToProductDetails = navigateToProductDetails)
             }
         }
     }
@@ -53,7 +61,7 @@ internal fun CarouselSection(section: ProductCarousel) {
 }
 
 @Composable
-private fun CarouselHeader(section: ProductCarousel) {
+private fun CarouselHeader(section: ProductCarousel, navigateToProductCategory: (Int) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -66,6 +74,11 @@ private fun CarouselHeader(section: ProductCarousel) {
             style = typography.titleLarge
         )
         Row(
+            modifier = Modifier
+                .semantics(mergeDescendants = true) {}
+                .clickable {
+                    navigateToProductCategory.invoke(section.header.linkId)
+                },
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -75,8 +88,8 @@ private fun CarouselHeader(section: ProductCarousel) {
                 color = colorScheme.primary
             )
             Icon(
-                painter = painterResource(id = R.drawable.ic_right_arrow_next), // or Icons.Filled.Add, Icons.Rounded.Menu
-                contentDescription = "Home Icon",
+                painter = painterResource(id =R.drawable.ic_right_arrow_next), // or Icons.Filled.Add, Icons.Rounded.Menu
+                contentDescription = null,
                 modifier = Modifier.size(12.dp),
                 tint = colorScheme.primary
             )
@@ -85,8 +98,11 @@ private fun CarouselHeader(section: ProductCarousel) {
 }
 
 @Composable
-private fun ProductCard(product: Product) {
+private fun ProductCard(product: Product, navigateToProductDetails: (Int) -> Unit) {
     Card(
+        modifier = Modifier.clickable {
+            navigateToProductDetails.invoke(product.id)
+        },
         colors = CardDefaults.cardColors(
             containerColor = colorScheme.surface,
         ),
@@ -99,7 +115,7 @@ private fun ProductCard(product: Product) {
                 model = product.imageUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                error = painterResource(R.drawable.ic_launcher_background)
+                error = ColorPainter(colorScheme.onSurfaceVariant)
             )
             Spacer(modifier = Modifier.height(8.dp))
             //Title label
@@ -145,8 +161,11 @@ fun ProductCarouselsPreview() {
             CarouselSection(
                 ProductCarousel(
                     header = CarouselHeader("cellphones", linkId = 1),
-                    products = productList
-                )
+                    products = productList,
+                ),
+                navigateToProductCategory = {},
+                navigateToProductDetails = {}
+
             )
         }
     }
