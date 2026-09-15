@@ -6,8 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.reneprojects.feature.products.model.ProductCarousel
-import com.reneprojects.feature.products.ui.components.CarouselSection
+import com.reneprojects.feature.products.ui.components.model.ProductCarousel
+import com.reneprojects.feature.products.ui.components.view.CarouselSection
 
 @Composable
 internal fun ProductsSection(

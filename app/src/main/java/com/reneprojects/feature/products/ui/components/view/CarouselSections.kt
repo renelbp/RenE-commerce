@@ -1,7 +1,10 @@
-package com.reneprojects.feature.products.ui.components
+package com.reneprojects.feature.products.ui.components.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Arrangement.SpaceBetween
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -22,7 +26,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -33,9 +39,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.reneprojects.R
-import com.reneprojects.feature.products.model.CarouselHeader
+import com.reneprojects.feature.products.ui.components.model.CarouselHeader
+import com.reneprojects.feature.products.ui.components.model.IconType
+import com.reneprojects.feature.products.ui.components.model.IconType.BEAUTY
+import com.reneprojects.feature.products.ui.components.model.IconType.FRAGRANCES
+import com.reneprojects.feature.products.ui.components.model.IconType.FURNITURE
+import com.reneprojects.feature.products.ui.components.model.IconType.GROCERIES
 import com.reneprojects.feature.products.model.Product
-import com.reneprojects.feature.products.model.ProductCarousel
+import com.reneprojects.feature.products.ui.components.model.ProductCarousel
 import com.reneprojects.ui.theme.RenEcommerceTheme
 
 @Composable
@@ -50,7 +61,7 @@ internal fun CarouselSection(
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = CenterVertically
         ) {
             items(section.products, key = { it.id }) {
                 ProductCard(product = it, navigateToProductDetails = navigateToProductDetails)
@@ -66,34 +77,91 @@ private fun CarouselHeader(section: ProductCarousel, navigateToProductCategory: 
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = SpaceBetween,
+        verticalAlignment = CenterVertically
     ) {
         val linkButtonLabel = stringResource(R.string.ren_ecomme_carousel_view_all_label)
+        HeaderTitleSection(section = section)
+
+        ViewAllSection(
+            navigateToProductCategory = navigateToProductCategory,
+            section = section,
+            linkButtonLabel = linkButtonLabel
+        )
+    }
+}
+
+@Composable
+private fun HeaderTitleSection(
+    section: ProductCarousel
+) {
+    Row(
+        modifier = Modifier
+            .semantics(mergeDescendants = true) {},
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = CenterVertically
+    ) {
+        section.header.iconType?.let {
+            val iconAndColor: Pair<Int, Color> = getIconAndColor(it)
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(color = iconAndColor.second, shape = RoundedCornerShape(16.dp))
+            ) {
+                Icon(
+                    painter = painterResource(id = iconAndColor.first), // or Icons.Filled.Add, Icons.Rounded.Menu
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = colorScheme.onPrimary
+                )
+            }
+
+        }
+
         Text(
             text = section.header.label.replaceFirstChar { it.uppercase() },
             style = typography.titleLarge
         )
-        Row(
-            modifier = Modifier
-                .semantics(mergeDescendants = true) {}
-                .clickable {
-                    navigateToProductCategory.invoke(section.header.linkId)
-                },
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = linkButtonLabel,
-                style = typography.titleMedium,
-                color = colorScheme.primary
-            )
-            Icon(
-                painter = painterResource(id =R.drawable.ic_right_arrow_next), // or Icons.Filled.Add, Icons.Rounded.Menu
-                contentDescription = null,
-                modifier = Modifier.size(12.dp),
-                tint = colorScheme.primary
-            )
-        }
+    }
+}
+
+@Composable
+private fun getIconAndColor(iconType: IconType): Pair<Int, Color> {
+    return when (iconType) {
+        FURNITURE -> Pair(R.drawable.ic_chair_furniture, colorScheme.primary)
+        BEAUTY -> Pair(R.drawable.ic_lipstick, colorScheme.secondary)
+        FRAGRANCES -> Pair(R.drawable.ic_fragance_perfume, colorScheme.tertiary)
+        GROCERIES -> Pair(R.drawable.ic_groceries, colorScheme.secondaryContainer)
+    }
+}
+
+@Composable
+private fun ViewAllSection(
+    navigateToProductCategory: (Int) -> Unit,
+    section: ProductCarousel,
+    linkButtonLabel: String
+) {
+    Row(
+        modifier = Modifier
+            .semantics(mergeDescendants = true) {}
+            .clickable {
+                navigateToProductCategory.invoke(section.header.linkId)
+            },
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = CenterVertically
+    ) {
+        Text(
+            text = linkButtonLabel,
+            style = typography.titleMedium,
+            color = colorScheme.primary
+        )
+        Icon(
+            painter = painterResource(id = R.drawable.ic_right_arrow_next), // or Icons.Filled.Add, Icons.Rounded.Menu
+            contentDescription = null,
+            modifier = Modifier.size(12.dp),
+            tint = colorScheme.primary
+        )
     }
 }
 
@@ -160,7 +228,11 @@ fun ProductCarouselsPreview() {
         Surface() {
             CarouselSection(
                 ProductCarousel(
-                    header = CarouselHeader("cellphones", linkId = 1),
+                    header = CarouselHeader(
+                        FRAGRANCES,
+                        "cellphones",
+                        linkId = 1
+                    ),
                     products = productList,
                 ),
                 navigateToProductCategory = {},

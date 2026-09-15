@@ -1,9 +1,10 @@
 package com.reneprojects.feature.products.domain.mapper
 
 import com.reneprojects.core.feature.products.local.entity.ProductEntity
-import com.reneprojects.feature.products.model.CarouselHeader
+import com.reneprojects.feature.products.ui.components.model.CarouselHeader
+import com.reneprojects.feature.products.ui.components.model.IconType
 import com.reneprojects.feature.products.model.Product
-import com.reneprojects.feature.products.model.ProductCarousel
+import com.reneprojects.feature.products.ui.components.model.ProductCarousel
 import com.reneprojects.utils.extension.toPriceString
 import dagger.Binds
 import dagger.Module
@@ -33,10 +34,10 @@ internal interface ProductMapper {
     /**
      * Groups a list of [ProductEntity] into a list of [ProductCarousel] grouped by category.
      *
-     * @param entities The list of products from the repository.
+     * @param products The list of products from the repository.
      * @return A list of sections for display in the UI.
      */
-    fun toProductSections(entities: List<ProductEntity>): List<ProductCarousel>
+    fun toProductSections(category: String, products: List<ProductEntity>, iconType: IconType?): ProductCarousel
 }
 /** endregion abstraction */
 
@@ -53,17 +54,20 @@ internal class ProductMapperImpl @Inject constructor() : ProductMapper {
             )
         }
 
-    override fun toProductSections(entities: List<ProductEntity>): List<ProductCarousel> {
-        return entities.groupBy { it.category }
-            .map { (category, products) ->
-                ProductCarousel(
-                    header = CarouselHeader(
-                        label = category,
-                        linkId = products.firstOrNull()?.id ?: 0
-                    ),
-                    products = products.map { toProductUiModel(it) }
-                )
-            }
+    override fun toProductSections(
+        category: String,
+        products: List<ProductEntity>,
+        iconType: IconType?
+    ): ProductCarousel {
+        return ProductCarousel(
+            header = CarouselHeader(
+                iconType = iconType,
+                label = category,
+                linkId = products.firstOrNull()?.id ?: 0
+            ),
+            products = products.map { toProductUiModel(it) }
+        )
     }
 }
+
 /** endregion implementation */
