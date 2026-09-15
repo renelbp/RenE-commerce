@@ -27,7 +27,7 @@ The application follows a layered, modularized architecture built around the fol
 
 |                        Current Status                        |                    Goal / Final Target Design                    |
 |:------------------------------------------------------------:|:----------------------------------------------------------------:|
-| ![Current Home](.github/assets/screenshots/current-home.png) | <img src=".github/assets/screenshots/goal-home.png" width="50%"> |
+| <img src=".github/assets/screenshots/current-home.png" width="50%">  | <img src=".github/assets/screenshots/goal-home.png" width="75%"> |
 
 ## Technical Stack
 
