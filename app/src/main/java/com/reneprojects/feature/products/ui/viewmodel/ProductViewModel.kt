@@ -6,7 +6,6 @@ import com.reneprojects.core.common.result.RenEcommerceResult
 import com.reneprojects.feature.products.domain.interactor.ProductsInteractor
 import com.reneprojects.feature.products.model.ProductsUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,7 +53,7 @@ internal class ProductViewModelImpl @Inject constructor(
             return
         }
 
-        loadProductsJob = viewModelScope.launch(Dispatchers.IO) {
+        loadProductsJob = viewModelScope.launch {
             updateLoadingState()
 
             val result = interactor.loadProductData(forceRefresh = forceRefresh)

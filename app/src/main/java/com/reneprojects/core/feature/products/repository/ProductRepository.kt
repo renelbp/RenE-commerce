@@ -15,7 +15,9 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -54,19 +56,20 @@ internal class ProductRepositoryImpl @Inject constructor(
         return productDao.observeProducts()
     }
 
-    override suspend fun loadProductData(forceRefresh: Boolean): RenEcommerceResult<Unit> {
-        val cacheKey = CacheKeys.PRODUCTS
-        val cacheStatus = cacheManager.getStatus(cacheKey)
+    override suspend fun loadProductData(forceRefresh: Boolean): RenEcommerceResult<Unit> =
+        withContext(Dispatchers.IO) {
+            val cacheKey = CacheKeys.PRODUCTS
+            val cacheStatus = cacheManager.getStatus(cacheKey)
 
-        if (!forceRefresh && cacheStatus.isValid) {
-            return RenEcommerceResult.Success(Unit)
+            if (!forceRefresh && cacheStatus.isValid) {
+                RenEcommerceResult.Success(Unit)
+            } else {
+                updateProducts(
+                    cacheKey = cacheKey,
+                    cacheStatus = cacheStatus
+                )
+            }
         }
-
-        return updateProducts(
-            cacheKey = cacheKey,
-            cacheStatus = cacheStatus
-        )
-    }
 
     /**
      * Synchronizes local products with the remote response using `ETag`\-based cache control.
