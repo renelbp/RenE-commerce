@@ -6,6 +6,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.reneprojects.feature.products.ui.sections.LoadingSection
+import com.reneprojects.feature.products.ui.sections.ProductsSection
 import com.reneprojects.feature.products.ui.viewmodel.ProductViewModel
 
 @Composable
@@ -33,6 +35,10 @@ internal fun PageContent(
                         .show()
                 })
         }
-        // TODO: Handle loading and error states (isLoading, errorMessage)
+
+        uiState.isLoading -> {
+            LoadingSection()
+        }
+        // TODO: Handle error states (errorMessage)
     }
 }

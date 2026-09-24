@@ -1,4 +1,4 @@
-package com.reneprojects.feature.products.ui
+package com.reneprojects.feature.products.ui.sections
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
