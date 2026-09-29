@@ -1,6 +1,6 @@
 package com.reneprojects.feature.products.model
 
-import com.reneprojects.feature.products.ui.components.model.ProductCarousel
+import com.reneprojects.components.productcarousel.model.ProductCarousel
 
 internal data class ProductsUiState(
     val productCarousels: List<ProductCarousel> = emptyList(),

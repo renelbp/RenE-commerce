@@ -1,4 +1,4 @@
-package com.reneprojects.feature.products.ui.components.model
+package com.reneprojects.components.productcarousel.model
 
 import com.reneprojects.feature.products.model.Product
 

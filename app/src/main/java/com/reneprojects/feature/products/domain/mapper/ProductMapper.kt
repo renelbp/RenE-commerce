@@ -1,10 +1,10 @@
 package com.reneprojects.feature.products.domain.mapper
 
 import com.reneprojects.core.feature.products.local.entity.ProductEntity
-import com.reneprojects.feature.products.ui.components.model.CarouselHeader
-import com.reneprojects.feature.products.ui.components.model.IconType
+import com.reneprojects.components.productcarousel.model.CarouselHeader
+import com.reneprojects.components.productcarousel.model.IconType
 import com.reneprojects.feature.products.model.Product
-import com.reneprojects.feature.products.ui.components.model.ProductCarousel
+import com.reneprojects.components.productcarousel.model.ProductCarousel
 import com.reneprojects.utils.extension.toPriceString
 import dagger.Binds
 import dagger.Module

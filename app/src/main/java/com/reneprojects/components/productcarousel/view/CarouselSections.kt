@@ -1,4 +1,4 @@
-package com.reneprojects.feature.products.ui.components.view
+package com.reneprojects.components.productcarousel.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,14 +39,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.reneprojects.R
-import com.reneprojects.feature.products.ui.components.model.CarouselHeader
-import com.reneprojects.feature.products.ui.components.model.IconType
-import com.reneprojects.feature.products.ui.components.model.IconType.BEAUTY
-import com.reneprojects.feature.products.ui.components.model.IconType.FRAGRANCES
-import com.reneprojects.feature.products.ui.components.model.IconType.FURNITURE
-import com.reneprojects.feature.products.ui.components.model.IconType.GROCERIES
+import com.reneprojects.components.productcarousel.model.CarouselHeader
+import com.reneprojects.components.productcarousel.model.IconType
+import com.reneprojects.components.productcarousel.model.IconType.BEAUTY
+import com.reneprojects.components.productcarousel.model.IconType.FRAGRANCES
+import com.reneprojects.components.productcarousel.model.IconType.FURNITURE
+import com.reneprojects.components.productcarousel.model.IconType.GROCERIES
 import com.reneprojects.feature.products.model.Product
-import com.reneprojects.feature.products.ui.components.model.ProductCarousel
+import com.reneprojects.components.productcarousel.model.ProductCarousel
 import com.reneprojects.ui.theme.RenEcommerceTheme
 
 @Composable

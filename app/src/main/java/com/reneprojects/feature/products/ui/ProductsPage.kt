@@ -22,6 +22,8 @@ internal fun PageContent(
             ProductsSection(
                 modifier = modifier,
                 productCarousels = uiState.productCarousels,
+                isRefreshing = uiState.isLoading,
+                onRefresh = viewModel::refreshProducts,
                 navigateToProductCategory = {// TODO IMPLEMENT NAVIGATION WITH NavGraph
                     Toast.makeText(context, "Navigation To Category Page", Toast.LENGTH_SHORT)
                         .show()
@@ -31,8 +33,7 @@ internal fun PageContent(
                         context,
                         "Navigation To Product Details Page",
                         Toast.LENGTH_SHORT
-                    )
-                        .show()
+                    ).show()
                 })
         }
 

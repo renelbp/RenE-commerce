@@ -3,8 +3,8 @@ package com.reneprojects.feature.products.domain.interactor
 import com.reneprojects.core.common.result.RenEcommerceResult
 import com.reneprojects.core.feature.products.repository.ProductRepository
 import com.reneprojects.feature.products.domain.mapper.ProductMapper
-import com.reneprojects.feature.products.ui.components.model.IconType
-import com.reneprojects.feature.products.ui.components.model.ProductCarousel
+import com.reneprojects.components.productcarousel.model.IconType
+import com.reneprojects.components.productcarousel.model.ProductCarousel
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
