@@ -1,10 +1,11 @@
 package com.reneprojects.feature.products.domain.mapper
 
+import com.reneprojects.components.productcarousel.model.CardCarouselData
+import com.reneprojects.components.productcarousel.model.CardCarouselData.CarouselHeader
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType
+import com.reneprojects.components.productcarousel.model.CardCarouselData.ItemCard
 import com.reneprojects.core.feature.products.local.entity.ProductEntity
-import com.reneprojects.components.productcarousel.model.CarouselHeader
-import com.reneprojects.components.productcarousel.model.IconType
-import com.reneprojects.feature.products.model.Product
-import com.reneprojects.components.productcarousel.model.ProductCarousel
+import com.reneprojects.feature.products.model.LandingPageData.ProductCarouselSectionData
 import com.reneprojects.utils.extension.toPriceString
 import dagger.Binds
 import dagger.Module
@@ -24,28 +25,24 @@ internal interface ProductUiMapperModule {
 /** region abstraction */
 internal interface ProductMapper {
     /**
-     * Maps a database [ProductEntity] to a UI-friendly [Product] model.
-     *
-     * @param entity The source database entity.
-     * @return A mapped UI model.
-     */
-    fun toProductUiModel(entity: ProductEntity): Product
-
-    /**
-     * Groups a list of [ProductEntity] into a list of [ProductCarousel] grouped by category.
+     * Groups a list of [ProductEntity] into a list of [CardCarouselData] grouped by category.
      *
      * @param products The list of products from the repository.
      * @return A list of sections for display in the UI.
      */
-    fun toProductSections(category: String, products: List<ProductEntity>, iconType: IconType?): ProductCarousel
+    fun toProductSections(
+        category: String,
+        products: List<ProductEntity>,
+        iconType: IconType?
+    ): ProductCarouselSectionData
 }
 /** endregion abstraction */
 
 /** region implementation */
 internal class ProductMapperImpl @Inject constructor() : ProductMapper {
-    override fun toProductUiModel(entity: ProductEntity): Product =
+    private fun toProductItemCard(entity: ProductEntity): ItemCard =
         with(entity) {
-            Product(
+            ItemCard(
                 id = id,
                 title = title,
                 formattedPrice = price.toPriceString(),
@@ -58,14 +55,16 @@ internal class ProductMapperImpl @Inject constructor() : ProductMapper {
         category: String,
         products: List<ProductEntity>,
         iconType: IconType?
-    ): ProductCarousel {
-        return ProductCarousel(
-            header = CarouselHeader(
-                iconType = iconType,
-                label = category,
-                linkId = products.firstOrNull()?.id ?: 0
-            ),
-            products = products.map { toProductUiModel(it) }
+    ): ProductCarouselSectionData {
+        return ProductCarouselSectionData(
+            cardCarouselData = CardCarouselData(
+                header = CarouselHeader(
+                    iconType = iconType,
+                    label = category,
+                    linkId = products.firstOrNull()?.id ?: 0
+                ),
+                products = products.map { toProductItemCard(it) }
+            )
         )
     }
 }

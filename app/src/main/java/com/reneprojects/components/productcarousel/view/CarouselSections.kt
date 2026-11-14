@@ -39,19 +39,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.reneprojects.R
-import com.reneprojects.components.productcarousel.model.CarouselHeader
-import com.reneprojects.components.productcarousel.model.IconType
-import com.reneprojects.components.productcarousel.model.IconType.BEAUTY
-import com.reneprojects.components.productcarousel.model.IconType.FRAGRANCES
-import com.reneprojects.components.productcarousel.model.IconType.FURNITURE
-import com.reneprojects.components.productcarousel.model.IconType.GROCERIES
-import com.reneprojects.feature.products.model.Product
-import com.reneprojects.components.productcarousel.model.ProductCarousel
+import com.reneprojects.components.productcarousel.model.CardCarouselData
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.BEAUTY
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FRAGRANCES
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FURNITURE
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.GROCERIES
+import com.reneprojects.components.productcarousel.model.CardCarouselData.ItemCard
 import com.reneprojects.ui.theme.RenEcommerceTheme
 
 @Composable
 internal fun CarouselSection(
-    section: ProductCarousel,
+    section: CardCarouselData,
     navigateToProductCategory: (Int) -> Unit,
     navigateToProductDetails: (Int) -> Unit
 ) {
@@ -72,7 +71,7 @@ internal fun CarouselSection(
 }
 
 @Composable
-private fun CarouselHeader(section: ProductCarousel, navigateToProductCategory: (Int) -> Unit) {
+private fun CarouselHeader(section: CardCarouselData, navigateToProductCategory: (Int) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -93,7 +92,7 @@ private fun CarouselHeader(section: ProductCarousel, navigateToProductCategory: 
 
 @Composable
 private fun HeaderTitleSection(
-    section: ProductCarousel
+    section: CardCarouselData
 ) {
     Row(
         modifier = Modifier
@@ -139,7 +138,7 @@ private fun getIconAndColor(iconType: IconType): Pair<Int, Color> {
 @Composable
 private fun ViewAllSection(
     navigateToProductCategory: (Int) -> Unit,
-    section: ProductCarousel,
+    section: CardCarouselData,
     linkButtonLabel: String
 ) {
     Row(
@@ -166,7 +165,7 @@ private fun ViewAllSection(
 }
 
 @Composable
-private fun ProductCard(product: Product, navigateToProductDetails: (Int) -> Unit) {
+private fun ProductCard(product: ItemCard, navigateToProductDetails: (Int) -> Unit) {
     Card(
         modifier = Modifier.clickable {
             navigateToProductDetails.invoke(product.id)
@@ -212,10 +211,10 @@ private fun ProductCard(product: Product, navigateToProductDetails: (Int) -> Uni
 @Composable
 fun ProductCarouselsPreview() {
     RenEcommerceTheme(dynamicColor = false) {
-        val productList = mutableListOf<Product>()
+        val productList = mutableListOf<ItemCard>()
         for (i in 0..5) {
             productList.add(
-                Product(
+                ItemCard(
                     id = i,
                     title = "Title $i",
                     formattedPrice = "$$i.00",
@@ -227,8 +226,8 @@ fun ProductCarouselsPreview() {
         }
         Surface() {
             CarouselSection(
-                ProductCarousel(
-                    header = CarouselHeader(
+                CardCarouselData(
+                    header = CardCarouselData.CarouselHeader(
                         FRAGRANCES,
                         "cellphones",
                         linkId = 1

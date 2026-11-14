@@ -1,9 +1,7 @@
 package com.reneprojects.feature.products.model
 
-import com.reneprojects.components.productcarousel.model.ProductCarousel
-
-internal data class ProductsUiState(
-    val productCarousels: List<ProductCarousel> = emptyList(),
+internal data class LandingUiState(
+    val landingPageData: List<LandingPageData> = emptyList(),
     val isLoading: Boolean = true,
     val searchQuery: String = "",
     val selectedCategory: String? = null,

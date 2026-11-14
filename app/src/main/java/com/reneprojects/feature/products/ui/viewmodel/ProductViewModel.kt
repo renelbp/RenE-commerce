@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.reneprojects.core.common.result.RenEcommerceResult
 import com.reneprojects.feature.products.domain.interactor.ProductsInteractor
-import com.reneprojects.feature.products.model.ProductsUiState
+import com.reneprojects.feature.products.model.LandingUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 internal interface ProductViewModel {
-    val uiState: StateFlow<ProductsUiState>
+    val uiState: StateFlow<LandingUiState>
     fun refreshProducts()
     fun retry()
     fun dismissError()
@@ -29,8 +29,8 @@ internal class ProductViewModelImpl @Inject constructor(
     private val interactor: ProductsInteractor,
 ) : ViewModel(), ProductViewModel {
 
-    private val _uiState = MutableStateFlow(ProductsUiState())
-    override val uiState: StateFlow<ProductsUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(LandingUiState())
+    override val uiState: StateFlow<LandingUiState> = _uiState.asStateFlow()
     private var loadProductsJob: Job? = null
 
     init {
@@ -39,9 +39,9 @@ internal class ProductViewModelImpl @Inject constructor(
     }
 
     private fun observeProducts() {
-        interactor.observeProductSections().onEach { sections ->
+        interactor.observeProductSections().onEach { data ->
             _uiState.update { currentState ->
-                currentState.copy(productCarousels = sections)
+                currentState.copy(landingPageData = data)
             }
         }.catch { error ->
             updateErrorState(error.message ?: "Unable to get load Products")

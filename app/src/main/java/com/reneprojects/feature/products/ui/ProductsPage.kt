@@ -18,10 +18,10 @@ internal fun PageContent(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     when {
-        uiState.productCarousels.isNotEmpty() -> {
+        uiState.landingPageData.isNotEmpty() -> {
             ProductsSection(
                 modifier = modifier,
-                productCarousels = uiState.productCarousels,
+                landingPageData = uiState.landingPageData,
                 isRefreshing = uiState.isLoading,
                 onRefresh = viewModel::refreshProducts,
                 navigateToProductCategory = {// TODO IMPLEMENT NAVIGATION WITH NavGraph
@@ -34,6 +34,9 @@ internal fun PageContent(
                         "Navigation To Product Details Page",
                         Toast.LENGTH_SHORT
                     ).show()
+                },
+                onFilterSelected = {// TODO IMPLEMENT FILTER SELECTION HANDLING
+                    Toast.makeText(context, "Filter Selected: $it", Toast.LENGTH_SHORT).show()
                 })
         }
 

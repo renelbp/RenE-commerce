@@ -1,12 +1,17 @@
 package com.reneprojects.feature.products.domain.interactor
 
+import com.reneprojects.components.productcarousel.model.CardCarouselData
+import com.reneprojects.components.productcarousel.model.CardCarouselData.CarouselHeader
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.BEAUTY
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FRAGRANCES
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FURNITURE
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.GROCERIES
 import com.reneprojects.core.common.result.RenEcommerceResult
 import com.reneprojects.core.feature.products.local.entity.ProductEntity
 import com.reneprojects.core.feature.products.repository.ProductRepository
 import com.reneprojects.feature.products.domain.mapper.ProductMapper
-import com.reneprojects.components.productcarousel.model.CarouselHeader
-import com.reneprojects.components.productcarousel.model.IconType
-import com.reneprojects.components.productcarousel.model.ProductCarousel
+import com.reneprojects.feature.products.model.LandingPageData
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -49,13 +54,13 @@ internal class ProductsInteractorTest {
         val groceriesProduct = productEntity(id = 5, category = "groceries")
         val otherProduct = productEntity(id = 6, category = "electronics")
 
-        val beautyCarousel = carousel(label = "beauty", linkId = 1, iconType = IconType.BEAUTY)
+        val beautyCarousel = carousel(label = "beauty", linkId = 1, iconType = BEAUTY)
         val furnitureCarousel =
-            carousel(label = "FURNITURE", linkId = 3, iconType = IconType.FURNITURE)
+            carousel(label = "FURNITURE", linkId = 3, iconType = FURNITURE)
         val fragrancesCarousel =
-            carousel(label = " fragrances ", linkId = 4, iconType = IconType.FRAGRANCES)
+            carousel(label = " fragrances ", linkId = 4, iconType = FRAGRANCES)
         val groceriesCarousel =
-            carousel(label = "groceries", linkId = 5, iconType = IconType.GROCERIES)
+            carousel(label = "groceries", linkId = 5, iconType = GROCERIES)
         val otherCarousel = carousel(label = "electronics", linkId = 6, iconType = null)
 
         `when`(repository.observeProducts()).thenReturn(
@@ -74,28 +79,28 @@ internal class ProductsInteractorTest {
             mapper.toProductSections(
                 category = "beauty",
                 products = listOf(beautyProductOne, beautyProductTwo),
-                iconType = IconType.BEAUTY
+                iconType = BEAUTY
             )
         ).thenReturn(beautyCarousel)
         `when`(
             mapper.toProductSections(
                 category = "FURNITURE",
                 products = listOf(furnitureProduct),
-                iconType = IconType.FURNITURE
+                iconType = FURNITURE
             )
         ).thenReturn(furnitureCarousel)
         `when`(
             mapper.toProductSections(
                 category = " fragrances ",
                 products = listOf(fragrancesProduct),
-                iconType = IconType.FRAGRANCES
+                iconType = FRAGRANCES
             )
         ).thenReturn(fragrancesCarousel)
         `when`(
             mapper.toProductSections(
                 category = "groceries",
                 products = listOf(groceriesProduct),
-                iconType = IconType.GROCERIES
+                iconType = GROCERIES
             )
         ).thenReturn(groceriesCarousel)
         `when`(
@@ -144,14 +149,16 @@ internal class ProductsInteractorTest {
         label: String,
         linkId: Int,
         iconType: IconType?
-    ): ProductCarousel {
-        return ProductCarousel(
-            header = CarouselHeader(
-                iconType = iconType,
-                label = label,
-                linkId = linkId
+    ): LandingPageData.ProductCarouselSectionData {
+        return LandingPageData.ProductCarouselSectionData(
+            cardCarouselData = CardCarouselData(
+                header = CarouselHeader(
+                    iconType = iconType,
+                    label = label,
+                    linkId = linkId
+                ),
+                products = emptyList()
             ),
-            products = emptyList()
         )
     }
 

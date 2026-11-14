@@ -1,10 +1,14 @@
 package com.reneprojects.feature.products.domain.interactor
 
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.BEAUTY
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FRAGRANCES
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FURNITURE
+import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.GROCERIES
 import com.reneprojects.core.common.result.RenEcommerceResult
 import com.reneprojects.core.feature.products.repository.ProductRepository
 import com.reneprojects.feature.products.domain.mapper.ProductMapper
-import com.reneprojects.components.productcarousel.model.IconType
-import com.reneprojects.components.productcarousel.model.ProductCarousel
+import com.reneprojects.feature.products.model.LandingPageData
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -35,7 +39,7 @@ internal interface ProductsInteractor {
      *
      * @return A stream of product sections grouped by category.
      */
-    fun observeProductSections(): Flow<List<ProductCarousel>>
+    fun observeProductSections(): Flow<List<LandingPageData>>
 
     /**
      * Requests a data refresh through the repository.
@@ -59,7 +63,7 @@ internal class ProductsInteractorImpl @Inject constructor(
         private const val GROCERIES_VALUE = "groceries"
     }
 
-    override fun observeProductSections(): Flow<List<ProductCarousel>> {
+    override fun observeProductSections(): Flow<List<LandingPageData>> {
         return repository.observeProducts().map { entities ->
             entities.groupBy { it.category }.map { (category, products) ->
                 val iconType: IconType? = getIconSection(category = category)
@@ -73,10 +77,10 @@ internal class ProductsInteractorImpl @Inject constructor(
 
     private fun getIconSection(category: String): IconType? {
         return when (category.trim().lowercase()) {
-            FRAGRANCES_VALUE -> IconType.FRAGRANCES
-            FURNITURE_VALUE -> IconType.FURNITURE
-            GROCERIES_VALUE -> IconType.GROCERIES
-            BEAUTY_VALUE -> IconType.BEAUTY
+            FRAGRANCES_VALUE -> FRAGRANCES
+            FURNITURE_VALUE -> FURNITURE
+            GROCERIES_VALUE -> GROCERIES
+            BEAUTY_VALUE -> BEAUTY
             else -> null
         }
     }
