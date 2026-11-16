@@ -1,11 +1,11 @@
 package com.reneprojects.components.productfilter.view
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.reneprojects.R
@@ -30,25 +31,26 @@ import com.reneprojects.components.productfilter.model.ItemFilterData.IconType.B
 import com.reneprojects.components.productfilter.model.ItemFilterData.IconType.FRAGRANCES
 import com.reneprojects.components.productfilter.model.ItemFilterData.IconType.FURNITURE
 import com.reneprojects.components.productfilter.model.ItemFilterData.IconType.GROCERIES
+import com.reneprojects.common.constants.CategorySlug
 import com.reneprojects.ui.theme.RenEcommerceTheme
 
 @Composable
 internal fun ProductFilterSection(
     filters: List<ItemFilterData>,
-    selectedIconType: IconType,
-    onFilterSelected: (IconType) -> Unit,
+    selectedSlug: String?,
+    onFilterSelected: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyRow(
-        modifier = modifier,
+        modifier = modifier.background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(filters, key = { it.iconType }) { filter ->
+        items(filters, key = { it.slug }) { filter ->
             ProductFilterChip(
                 filter = filter,
-                selected = filter.iconType == selectedIconType,
-                onClick = { onFilterSelected(filter.iconType) }
+                selected = filter.slug == selectedSlug,
+                onClick = { onFilterSelected(filter.slug) }
             )
         }
     }
@@ -63,7 +65,6 @@ private fun ProductFilterChip(
 ) {
     Surface(
         modifier = modifier
-            .height(56.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(28.dp),
         color = if (selected) {
@@ -82,26 +83,32 @@ private fun ProductFilterChip(
     ) {
         Row(
             modifier = Modifier.padding(
-                horizontal = 18.dp
+                vertical = 8.dp,
+                horizontal = 12.dp
             ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                painter = painterResource(id = getFilterIcon(filter.iconType)),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = if (selected) {
-                    Color.White
-                } else {
-                    Color(0xFF1D2433)
-                }
-            )
+            val iconRes = getFilterIcon(filter.iconType)
+            if (iconRes != null) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = if (selected) {
+                        Color.White
+                    } else {
+                        Color(0xFF1D2433)
+                    }
+                )
+            }
 
             Text(
                 text = filter.label,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 color = if (selected) {
                     Color.White
                 } else {
@@ -112,13 +119,13 @@ private fun ProductFilterChip(
     }
 }
 
-@Composable
-private fun getFilterIcon(iconType: IconType): Int {
+private fun getFilterIcon(iconType: IconType?): Int? {
     return when (iconType) {
         FURNITURE -> R.drawable.ic_chair_furniture
         BEAUTY -> R.drawable.ic_lipstick
         FRAGRANCES -> R.drawable.ic_fragance_perfume
         GROCERIES -> R.drawable.ic_groceries
+        null -> null
     }
 }
 
@@ -129,12 +136,33 @@ private fun ProductFilterSectionPreview() {
         Surface {
             ProductFilterSection(
                 filters = listOf(
-                    ItemFilterData(label = "Furniture", iconType = FURNITURE),
-                    ItemFilterData(label = "Beauty", iconType = BEAUTY),
-                    ItemFilterData(label = "Fragrances", iconType = FRAGRANCES),
-                    ItemFilterData(label = "Groceries", iconType = GROCERIES),
+                    ItemFilterData(
+                        slug = CategorySlug.FURNITURE,
+                        label = "Furniture",
+                        iconType = FURNITURE
+                    ),
+                    ItemFilterData(
+                        slug = CategorySlug.BEAUTY,
+                        label = "Beauty",
+                        iconType = BEAUTY
+                    ),
+                    ItemFilterData(
+                        slug = CategorySlug.FRAGRANCES,
+                        label = "Fragrances",
+                        iconType = FRAGRANCES
+                    ),
+                    ItemFilterData(
+                        slug = CategorySlug.GROCERIES,
+                        label = "Groceries",
+                        iconType = GROCERIES
+                    ),
+                    ItemFilterData(
+                        slug = CategorySlug.OTHERS,
+                        label = "Others",
+                        iconType = null
+                    ),
                 ),
-                selectedIconType = FURNITURE,
+                selectedSlug = CategorySlug.FURNITURE,
                 onFilterSelected = {}
             )
         }

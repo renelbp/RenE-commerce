@@ -1,16 +1,16 @@
 package com.reneprojects.core.feature.products.repository
 
+import com.reneprojects.core.common.cachemanager.constants.CacheKeys
+import com.reneprojects.core.common.cachemanager.constants.CachePolicy
 import com.reneprojects.core.common.cachemanager.manager.CacheManager
 import com.reneprojects.core.common.cachemanager.model.CacheStatus
-import com.reneprojects.core.common.constants.CacheKeys
-import com.reneprojects.core.common.constants.CachePolicy
+import com.reneprojects.core.common.remote.RemoteResult
 import com.reneprojects.core.common.result.RenEcommerceResult
 import com.reneprojects.core.feature.products.local.dao.ProductDao
 import com.reneprojects.core.feature.products.local.entity.ProductEntity
 import com.reneprojects.core.feature.products.mapper.ProductEntityMapper
 import com.reneprojects.core.feature.products.mapper.ProductEntityMapperModule
 import com.reneprojects.core.feature.products.remote.datasource.ProductsRemoteDataSource
-import com.reneprojects.core.feature.products.remote.datasource.ProductsRemoteResult
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -89,7 +89,7 @@ internal class ProductRepositoryImpl @Inject constructor(
         cacheStatus: CacheStatus
     ): RenEcommerceResult<Unit> {
         return when (val remoteResult = remoteDataSource.fetchProducts(eTag = cacheStatus.eTag)) {
-            is ProductsRemoteResult.NotModified -> {
+            is RemoteResult.NotModified -> {
                 cacheManager.updateCache(
                     key = cacheKey,
                     expirationTimeMillis = CachePolicy.PRODUCTS_TTL,
@@ -98,8 +98,8 @@ internal class ProductRepositoryImpl @Inject constructor(
                 RenEcommerceResult.Success(Unit)
             }
 
-            is ProductsRemoteResult.Success -> {
-                val productEntities = remoteResult.products.map {
+            is RemoteResult.Success -> {
+                val productEntities = remoteResult.data.map {
                     productEntityMapper.toProductEntity(it)
                 }
 
@@ -115,7 +115,7 @@ internal class ProductRepositoryImpl @Inject constructor(
                 RenEcommerceResult.Success(Unit)
             }
 
-            is ProductsRemoteResult.Error -> {
+            is RemoteResult.Error -> {
                 RenEcommerceResult.Error(
                     exception = Exception("Error ${remoteResult.code}: ${remoteResult.message}")
                 )

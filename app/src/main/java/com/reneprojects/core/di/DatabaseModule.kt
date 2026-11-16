@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import com.reneprojects.core.common.cachemanager.dao.CacheMetadataDao
 import com.reneprojects.core.database.RenEcommerceDatabase
+import com.reneprojects.core.database.migrations.DatabaseMigrations
+import com.reneprojects.core.feature.categories.local.dao.CategoryDao
 import com.reneprojects.core.feature.products.local.dao.ProductDao
 import dagger.Module
 import dagger.Provides
@@ -25,7 +27,8 @@ internal object RenEcommerceDatabaseModule {
             context,
             RenEcommerceDatabase::class.java,
             "ecommerce_database"
-        ).build()
+        ).addMigrations(DatabaseMigrations.MIGRATION_1_2)
+            .build()
     }
 
     @Provides
@@ -33,6 +36,13 @@ internal object RenEcommerceDatabaseModule {
         database: RenEcommerceDatabase
     ): ProductDao {
         return database.productDao()
+    }
+
+    @Provides
+    fun provideCategoryDao(
+        database: RenEcommerceDatabase
+    ): CategoryDao {
+        return database.categoryDao()
     }
 
     @Provides

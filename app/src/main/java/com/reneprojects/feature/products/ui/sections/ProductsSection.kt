@@ -4,7 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -12,22 +13,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.reneprojects.components.loadingspinner.LoadingSpinner
 import com.reneprojects.components.productcarousel.view.CarouselSection
-import com.reneprojects.components.productfilter.model.ItemFilterData.IconType
 import com.reneprojects.components.productfilter.view.ProductFilterSection
 import com.reneprojects.feature.products.model.LandingPageData
 import com.reneprojects.feature.products.model.LandingPageData.ProductCarouselSectionData
 import com.reneprojects.feature.products.model.LandingPageData.ProductFilterSectionData
 
-@OptIn(ExperimentalMaterial3Api::class)
+private const val FILTER_SECTION_KEY = "product_filter"
+
 @Composable
 internal fun ProductsSection(
     landingPageData: List<LandingPageData>,
     modifier: Modifier,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
+    selectedCategory: String?,
     navigateToProductCategory: (Int) -> Unit,
     navigateToProductDetails: (Int) -> Unit,
-    onFilterSelected: (IconType) -> Unit
+    onFilterSelected: (String?) -> Unit
 ) {
     val state = rememberPullToRefreshState()
 
@@ -46,46 +48,42 @@ internal fun ProductsSection(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            val filterSection = landingPageData
+                .filterIsInstance<ProductFilterSectionData>()
+                .firstOrNull()
+
+            filterSection?.let{
+                stickyHeader(key = FILTER_SECTION_KEY) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.background,
+                    ) {
+                        ProductFilterSection(
+                            filters = filterSection.filters,
+                            selectedSlug = selectedCategory,
+                            onFilterSelected = onFilterSelected
+                        )
+                    }
+                }
+            }
+
             itemsIndexed(
-                items = landingPageData,
+                items = landingPageData.filterIsInstance<ProductCarouselSectionData>(),
                 key = { index, section -> section.composeKey(index) }
             ) { _, section ->
-                LandingSectionContent(
-                    section = section,
+                CarouselSection(
+                    section = section.cardCarouselData,
                     navigateToProductCategory = navigateToProductCategory,
-                    navigateToProductDetails = navigateToProductDetails,
-                    onFilterSelected = onFilterSelected
+                    navigateToProductDetails = navigateToProductDetails
                 )
             }
         }
     }
 }
 
-@Composable
-private fun LandingSectionContent(
-    section: LandingPageData,
-    navigateToProductCategory: (Int) -> Unit,
-    navigateToProductDetails: (Int) -> Unit,
-    onFilterSelected: (IconType) -> Unit
-) {
-    when (section) {
-        is ProductCarouselSectionData -> CarouselSection(
-            section = section.cardCarouselData,
-            navigateToProductCategory = navigateToProductCategory,
-            navigateToProductDetails = navigateToProductDetails
-        )
-
-        is ProductFilterSectionData -> ProductFilterSection(
-            filters = section.filters,
-            selectedIconType = section.selectedIconType,
-            onFilterSelected = onFilterSelected
-        )
-    }
-}
 
 private fun LandingPageData.composeKey(index: Int): String {
     return when (this) {
         is ProductCarouselSectionData -> "product_carousel-${cardCarouselData.header}-$index"
-        is ProductFilterSectionData -> "product_filter-$selectedIconType-$index"
+        is ProductFilterSectionData -> FILTER_SECTION_KEY
     }
 }

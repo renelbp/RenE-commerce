@@ -1,6 +1,6 @@
 package com.reneprojects.core.di
 
-import com.reneprojects.core.feature.products.remote.api.ProductsApiService
+import com.reneprojects.core.network.api.RenEcommerceApiService
 import com.reneprojects.core.network.constants.NetworkConstants
 import dagger.Module
 import dagger.Provides
@@ -24,9 +24,9 @@ internal object NetworkModule {
 
     @Provides
     @Singleton
-    fun providesProductApiService(
+    fun providesRenEcommerceApiService(
         retrofit: Retrofit
-    ): ProductsApiService {
-        return retrofit.create(ProductsApiService::class.java)
+    ): RenEcommerceApiService {
+        return retrofit.create(RenEcommerceApiService::class.java)
     }
 }

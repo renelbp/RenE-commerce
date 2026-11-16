@@ -35,9 +35,9 @@ internal fun PageContent(
                         Toast.LENGTH_SHORT
                     ).show()
                 },
-                onFilterSelected = {// TODO IMPLEMENT FILTER SELECTION HANDLING
-                    Toast.makeText(context, "Filter Selected: $it", Toast.LENGTH_SHORT).show()
-                })
+                selectedCategory = uiState.selectedCategory,
+                onFilterSelected = viewModel::onFilterSelected
+            )
         }
 
         uiState.isLoading -> {

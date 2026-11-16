@@ -9,8 +9,7 @@ internal sealed interface LandingPageData {
     ) : LandingPageData
 
     data class ProductFilterSectionData(
-        val filters: List<ItemFilterData>,
-        val selectedIconType: ItemFilterData.IconType
+        val filters: List<ItemFilterData>
     ) : LandingPageData
 
 }

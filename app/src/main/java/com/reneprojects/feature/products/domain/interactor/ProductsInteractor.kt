@@ -5,7 +5,9 @@ import com.reneprojects.components.productcarousel.model.CardCarouselData.IconTy
 import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FRAGRANCES
 import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FURNITURE
 import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.GROCERIES
+import com.reneprojects.common.constants.CategorySlug
 import com.reneprojects.core.common.result.RenEcommerceResult
+import com.reneprojects.core.feature.categories.repository.CategoriesRepository
 import com.reneprojects.core.feature.products.repository.ProductRepository
 import com.reneprojects.feature.products.domain.mapper.ProductMapper
 import com.reneprojects.feature.products.model.LandingPageData
@@ -14,9 +16,11 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,17 +39,21 @@ internal interface ProductsInteractorModule {
 /** region abstraction */
 internal interface ProductsInteractor {
     /**
-     * Exposes a [Flow] of product carousels ready for the UI layer.
+     * Exposes a [Flow] of landing sections ready for the UI layer.
      *
-     * @return A stream of product sections grouped by category.
+     * The category filter section comes first when categories are available; the rest are product
+     * carousels grouped by category.
+     *
+     * @return A stream of landing sections.
      */
     fun observeProductSections(): Flow<List<LandingPageData>>
 
     /**
-     * Requests a data refresh through the repository.
+     * Requests a data refresh for products and categories through the repositories.
      *
      * @param forceRefresh Whether to bypass local cache validation.
-     * @return The result of the load operation.
+     * @return The result of the products load. A categories failure is tolerated and does not fail
+     * the whole refresh.
      */
     suspend fun loadProductData(forceRefresh: Boolean): RenEcommerceResult<Unit>
 }
@@ -53,40 +61,55 @@ internal interface ProductsInteractor {
 
 /** region implementation */
 internal class ProductsInteractorImpl @Inject constructor(
-    private val repository: ProductRepository,
+    private val productsRepository: ProductRepository,
+    private val categoriesRepository: CategoriesRepository,
     private val mapper: ProductMapper
 ) : ProductsInteractor {
-    private companion object CategoryConstants {
-        private const val FURNITURE_VALUE = "furniture"
-        private const val BEAUTY_VALUE = "beauty"
-        private const val FRAGRANCES_VALUE = "fragrances"
-        private const val GROCERIES_VALUE = "groceries"
-    }
 
     override fun observeProductSections(): Flow<List<LandingPageData>> {
-        return repository.observeProducts().map { entities ->
-            entities.groupBy { it.category }.map { (category, products) ->
-                val iconType: IconType? = getIconSection(category = category)
-                mapper.toProductSections(
-                    category = category, products = products,
-                    iconType = iconType
-                )
+        return combine(
+            productsRepository.observeProducts(),
+            categoriesRepository.observeCategories()
+        ) { products, categories ->
+            buildList {
+                val filterSection = mapper.toProductFilterSection(categories)
+                if (filterSection != null) {
+                    add(filterSection)
+                }
+
+                products.groupBy { it.category }.forEach { (category, productList) ->
+                    add(
+                        mapper.toProductSections(
+                            category = category,
+                            products = productList,
+                            iconType = getIconSection(category = category)
+                        )
+                    )
+                }
             }
         }.flowOn(Dispatchers.Default)
     }
 
     private fun getIconSection(category: String): IconType? {
         return when (category.trim().lowercase()) {
-            FRAGRANCES_VALUE -> FRAGRANCES
-            FURNITURE_VALUE -> FURNITURE
-            GROCERIES_VALUE -> GROCERIES
-            BEAUTY_VALUE -> BEAUTY
+            CategorySlug.FRAGRANCES -> FRAGRANCES
+            CategorySlug.FURNITURE -> FURNITURE
+            CategorySlug.GROCERIES -> GROCERIES
+            CategorySlug.BEAUTY -> BEAUTY
             else -> null
         }
     }
 
-    override suspend fun loadProductData(forceRefresh: Boolean): RenEcommerceResult<Unit> {
-        return repository.loadProductData(forceRefresh = forceRefresh)
-    }
+    override suspend fun loadProductData(forceRefresh: Boolean): RenEcommerceResult<Unit> =
+        coroutineScope {
+            val categoriesResult = async {
+                categoriesRepository.loadCategoriesData(forceRefresh = forceRefresh)
+            }
+
+            val productsResult = productsRepository.loadProductData(forceRefresh = forceRefresh)
+
+            categoriesResult.await()
+            productsResult
+        }
 }
 /** endregion implementation */

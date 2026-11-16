@@ -1,5 +1,6 @@
 package com.reneprojects.feature.products.ui.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.reneprojects.core.common.result.RenEcommerceResult
@@ -22,20 +23,46 @@ internal interface ProductViewModel {
     fun refreshProducts()
     fun retry()
     fun dismissError()
+
+    /**
+     * Applies a single-selection category filter, toggling it off when the same chip is tapped again.
+     *
+     * @param slug Category slug tapped in the filter row.
+     */
+    fun onFilterSelected(slug: String?)
 }
 
 @HiltViewModel
 internal class ProductViewModelImpl @Inject constructor(
     private val interactor: ProductsInteractor,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel(), ProductViewModel {
+
+    private companion object Keys {
+        private const val SELECTED_CATEGORY = "selected_category"
+    }
 
     private val _uiState = MutableStateFlow(LandingUiState())
     override val uiState: StateFlow<LandingUiState> = _uiState.asStateFlow()
     private var loadProductsJob: Job? = null
 
+    private val selectedCategory = savedStateHandle.getStateFlow<String?>(
+        key = SELECTED_CATEGORY,
+        initialValue = null
+    )
+
     init {
         observeProducts()
+        observeSelectedCategory()
         loadProductData()
+    }
+
+    private fun observeSelectedCategory() {
+        selectedCategory.onEach { slug ->
+            _uiState.update { currentState ->
+                currentState.copy(selectedCategory = slug)
+            }
+        }.launchIn(viewModelScope)
     }
 
     private fun observeProducts() {
@@ -105,6 +132,11 @@ internal class ProductViewModelImpl @Inject constructor(
                 errorMessage = null,
             )
         }
+    }
+
+    override fun onFilterSelected(slug: String?) {
+        val newSelection = if (selectedCategory.value == slug) null else slug
+        savedStateHandle[SELECTED_CATEGORY] = newSelection
     }
 
 }

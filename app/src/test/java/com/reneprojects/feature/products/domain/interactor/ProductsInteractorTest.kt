@@ -7,11 +7,16 @@ import com.reneprojects.components.productcarousel.model.CardCarouselData.IconTy
 import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FRAGRANCES
 import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FURNITURE
 import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.GROCERIES
+import com.reneprojects.components.productfilter.model.ItemFilterData
+import com.reneprojects.common.constants.CategorySlug
 import com.reneprojects.core.common.result.RenEcommerceResult
+import com.reneprojects.core.feature.categories.local.entity.CategoryEntity
+import com.reneprojects.core.feature.categories.repository.CategoriesRepository
 import com.reneprojects.core.feature.products.local.entity.ProductEntity
 import com.reneprojects.core.feature.products.repository.ProductRepository
 import com.reneprojects.feature.products.domain.mapper.ProductMapper
 import com.reneprojects.feature.products.model.LandingPageData
+import com.reneprojects.feature.products.model.LandingPageData.ProductFilterSectionData
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -35,6 +40,9 @@ internal class ProductsInteractorTest {
     private lateinit var repository: ProductRepository
 
     @Mock
+    private lateinit var categoriesRepository: CategoriesRepository
+
+    @Mock
     private lateinit var mapper: ProductMapper
 
     private lateinit var spyInteractor: ProductsInteractorImpl
@@ -42,7 +50,13 @@ internal class ProductsInteractorTest {
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        spyInteractor = spy(ProductsInteractorImpl(repository = repository, mapper = mapper))
+        spyInteractor = spy(
+            ProductsInteractorImpl(
+                productsRepository = repository,
+                categoriesRepository = categoriesRepository,
+                mapper = mapper
+            )
+        )
     }
 
     @Test
@@ -75,6 +89,8 @@ internal class ProductsInteractorTest {
                 )
             )
         )
+        `when`(categoriesRepository.observeCategories()).thenReturn(flowOf(emptyList()))
+        `when`(mapper.toProductFilterSection(emptyList())).thenReturn(null)
         `when`(
             mapper.toProductSections(
                 category = "beauty",
@@ -126,9 +142,48 @@ internal class ProductsInteractorTest {
     }
 
     @Test
+    fun observeProductSections_emitsFilterSectionFirst_whenCategoriesAreAvailable() =
+        runBlocking {
+            val categories = listOf(
+                CategoryEntity(
+                    slug = CategorySlug.FURNITURE,
+                    name = "Furniture"
+                )
+            )
+            val filterSection = ProductFilterSectionData(
+                filters = listOf(
+                    ItemFilterData(
+                        slug = CategorySlug.FURNITURE,
+                        label = "Furniture",
+                        iconType = ItemFilterData.IconType.FURNITURE
+                    )
+                )
+            )
+            val product = productEntity(id = 7, category = "beauty")
+            val beautyCarousel = carousel(label = "beauty", linkId = 7, iconType = BEAUTY)
+
+            `when`(repository.observeProducts()).thenReturn(flowOf(listOf(product)))
+            `when`(categoriesRepository.observeCategories()).thenReturn(flowOf(categories))
+            `when`(mapper.toProductFilterSection(categories)).thenReturn(filterSection)
+            `when`(
+                mapper.toProductSections(
+                    category = "beauty",
+                    products = listOf(product),
+                    iconType = BEAUTY
+                )
+            ).thenReturn(beautyCarousel)
+
+            val result = spyInteractor.observeProductSections().first()
+
+            assertEquals(listOf(filterSection, beautyCarousel), result)
+        }
+
+    @Test
     fun loadProductData_delegatesFalseFlagToRepository() = runBlocking {
         val expectedResult = RenEcommerceResult.Success(Unit)
         `when`(repository.loadProductData(false)).thenReturn(expectedResult)
+        `when`(categoriesRepository.loadCategoriesData(false))
+            .thenReturn(RenEcommerceResult.Success(Unit))
 
         val result = spyInteractor.loadProductData(forceRefresh = false)
 
@@ -139,8 +194,22 @@ internal class ProductsInteractorTest {
     fun loadProductData_delegatesTrueFlagToRepository() = runBlocking {
         val expectedResult = RenEcommerceResult.Success(Unit)
         `when`(repository.loadProductData(true)).thenReturn(expectedResult)
+        `when`(categoriesRepository.loadCategoriesData(true))
+            .thenReturn(RenEcommerceResult.Success(Unit))
 
         val result = spyInteractor.loadProductData(forceRefresh = true)
+
+        assertSame(expectedResult, result)
+    }
+
+    @Test
+    fun loadProductData_returnsProductsResult_evenWhenCategoriesFail() = runBlocking {
+        val expectedResult = RenEcommerceResult.Success(Unit)
+        `when`(repository.loadProductData(false)).thenReturn(expectedResult)
+        `when`(categoriesRepository.loadCategoriesData(false))
+            .thenReturn(RenEcommerceResult.Error(exception = Exception("categories failed")))
+
+        val result = spyInteractor.loadProductData(forceRefresh = false)
 
         assertSame(expectedResult, result)
     }
