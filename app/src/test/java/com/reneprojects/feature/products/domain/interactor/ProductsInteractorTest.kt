@@ -7,6 +7,7 @@ import com.reneprojects.components.productcarousel.model.CardCarouselData.IconTy
 import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FRAGRANCES
 import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FURNITURE
 import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.GROCERIES
+import com.reneprojects.components.productcard.model.ProductCardData
 import com.reneprojects.components.productfilter.model.ItemFilterData
 import com.reneprojects.common.constants.CategorySlug
 import com.reneprojects.core.common.result.RenEcommerceResult
@@ -15,12 +16,16 @@ import com.reneprojects.core.feature.categories.repository.CategoriesRepository
 import com.reneprojects.core.feature.products.local.entity.ProductEntity
 import com.reneprojects.core.feature.products.repository.ProductRepository
 import com.reneprojects.feature.products.domain.mapper.ProductMapper
+import com.reneprojects.feature.products.domain.mapper.ProductMapperImpl
 import com.reneprojects.feature.products.model.LandingPageData
+import com.reneprojects.feature.products.model.LandingPageData.ProductCarouselSectionData
 import com.reneprojects.feature.products.model.LandingPageData.ProductFilterSectionData
+import com.reneprojects.utils.extension.toPriceString
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
@@ -179,6 +184,188 @@ internal class ProductsInteractorTest {
         }
 
     @Test
+    fun observeProductSections_mapsDiscountOriginalPriceAndRating() = runBlocking {
+        val product = productEntity(
+            id = 7,
+            category = "beauty",
+            price = 100.0,
+            discountPercentage = 12.4,
+            rating = 4.56
+        )
+        `when`(repository.observeProducts()).thenReturn(flowOf(listOf(product)))
+        `when`(categoriesRepository.observeCategories()).thenReturn(flowOf(emptyList()))
+
+        val result = listingInteractor()
+            .observeProductSections()
+            .first()
+            .filterIsInstance<ProductCarouselSectionData>()
+            .single()
+            .cardCarouselData
+            .products
+            .single()
+
+        assertEquals(87.6.toPriceString(), result.formattedPrice)
+        assertEquals(100.0.toPriceString(), result.formattedOriginalPrice)
+        assertEquals(12, result.discountPercentage)
+        assertEquals("4.6", result.formattedRating)
+    }
+
+    @Test
+    fun observeProductSections_hidesDiscountAndRating_whenTheyAreNotMeaningful() = runBlocking {
+        val product = productEntity(
+            id = 8,
+            category = "beauty",
+            discountPercentage = 0.3,
+            rating = 0.0
+        )
+        `when`(repository.observeProducts()).thenReturn(flowOf(listOf(product)))
+        `when`(categoriesRepository.observeCategories()).thenReturn(flowOf(emptyList()))
+
+        val result = listingInteractor()
+            .observeProductSections()
+            .first()
+            .filterIsInstance<ProductCarouselSectionData>()
+            .single()
+            .cardCarouselData
+            .products
+            .single()
+
+        assertNull(result.formattedOriginalPrice)
+        assertNull(result.discountPercentage)
+        assertNull(result.formattedRating)
+    }
+
+    @Test
+    fun observeProductListing_returnsEmpty_whenNoCategorySelected() = runBlocking {
+        `when`(repository.observeProducts())
+            .thenReturn(flowOf(listOf(productEntity(id = 1, category = "beauty"))))
+
+        val result = listingInteractor()
+            .observeProductListing(flowOf(null))
+            .first()
+
+        assertEquals(emptyList<ProductCardData>(), result)
+    }
+
+    @Test
+    fun observeProductListing_filtersByNormalizedCategory_andSortsById() = runBlocking {
+        val beautyOne = productEntity(id = 5, category = " BEAUTY ")
+        val beautyTwo = productEntity(id = 2, category = "beauty")
+        val furniture = productEntity(id = 3, category = "furniture")
+        `when`(repository.observeProducts())
+            .thenReturn(flowOf(listOf(beautyOne, furniture, beautyTwo)))
+
+        val result = listingInteractor()
+            .observeProductListing(flowOf("beauty"))
+            .first()
+
+        assertEquals(listOf(2, 5), result.map { it.id })
+    }
+
+    @Test
+    fun observeProductListing_othersReturnsProductsOutsideSupportedCategories() = runBlocking {
+        val beauty = productEntity(id = 1, category = "beauty")
+        val electronics = productEntity(id = 6, category = "electronics")
+        val smartphones = productEntity(id = 4, category = "smartphones")
+        `when`(repository.observeProducts())
+            .thenReturn(flowOf(listOf(beauty, electronics, smartphones)))
+
+        val result = listingInteractor()
+            .observeProductListing(flowOf(CategorySlug.OTHERS))
+            .first()
+
+        assertEquals(listOf(4, 6), result.map { it.id })
+    }
+
+    @Test
+    fun observeProductListing_mapsDisplayFields() = runBlocking {
+        val product = productEntity(
+            id = 9,
+            category = "beauty",
+            rating = 4.5,
+            brand = "  Essence  "
+        )
+        `when`(repository.observeProducts()).thenReturn(flowOf(listOf(product)))
+
+        val result = listingInteractor()
+            .observeProductListing(flowOf("beauty"))
+            .first()
+            .single()
+
+        assertEquals(9, result.id)
+        assertEquals("Title 9", result.title)
+        assertEquals("4.5", result.formattedRating)
+        assertEquals("Essence", result.brand)
+        assertEquals(product.thumbnail, result.imageUrl)
+    }
+
+    @Test
+    fun observeProductListing_roundsDiscount_andShowsBothPrices() = runBlocking {
+        val product = productEntity(
+            id = 3,
+            category = "beauty",
+            price = 100.0,
+            discountPercentage = 12.4
+        )
+        `when`(repository.observeProducts()).thenReturn(flowOf(listOf(product)))
+
+        val result = listingInteractor()
+            .observeProductListing(flowOf("beauty"))
+            .first()
+            .single()
+
+        assertEquals(12, result.discountPercentage)
+        assertEquals(87.6.toPriceString(), result.formattedPrice)
+        assertEquals(100.0.toPriceString(), result.formattedOriginalPrice)
+    }
+
+    @Test
+    fun observeProductListing_hidesDiscount_whenItRoundsToZero() = runBlocking {
+        val product = productEntity(
+            id = 4,
+            category = "beauty",
+            price = 50.0,
+            discountPercentage = 0.3
+        )
+        `when`(repository.observeProducts()).thenReturn(flowOf(listOf(product)))
+
+        val result = listingInteractor()
+            .observeProductListing(flowOf("beauty"))
+            .first()
+            .single()
+
+        assertNull(result.discountPercentage)
+        assertNull(result.formattedOriginalPrice)
+        assertEquals(50.0.toPriceString(), result.formattedPrice)
+    }
+
+    @Test
+    fun observeProductListing_hidesDiscount_whenZero() = runBlocking {
+        val product = productEntity(
+            id = 5,
+            category = "beauty",
+            discountPercentage = 0.0
+        )
+        `when`(repository.observeProducts()).thenReturn(flowOf(listOf(product)))
+
+        val result = listingInteractor()
+            .observeProductListing(flowOf("beauty"))
+            .first()
+            .single()
+
+        assertNull(result.discountPercentage)
+        assertNull(result.formattedOriginalPrice)
+    }
+
+    private fun listingInteractor(): ProductsInteractorImpl {
+        return ProductsInteractorImpl(
+            productsRepository = repository,
+            categoriesRepository = categoriesRepository,
+            mapper = ProductMapperImpl()
+        )
+    }
+
+    @Test
     fun loadProductData_delegatesFalseFlagToRepository() = runBlocking {
         val expectedResult = RenEcommerceResult.Success(Unit)
         `when`(repository.loadProductData(false)).thenReturn(expectedResult)
@@ -233,18 +420,22 @@ internal class ProductsInteractorTest {
 
     private fun productEntity(
         id: Int,
-        category: String
+        category: String,
+        price: Double = id.toDouble(),
+        discountPercentage: Double = 0.0,
+        rating: Double = 0.0,
+        brand: String? = null
     ): ProductEntity {
         return ProductEntity(
             id = id,
             title = "Title $id",
             description = "Description $id",
             category = category,
-            price = id.toDouble(),
-            discountPercentage = 0.0,
-            rating = 0.0,
+            price = price,
+            discountPercentage = discountPercentage,
+            rating = rating,
             stock = id,
-            brand = null,
+            brand = brand,
             thumbnail = "https://example.com/$id"
         )
     }

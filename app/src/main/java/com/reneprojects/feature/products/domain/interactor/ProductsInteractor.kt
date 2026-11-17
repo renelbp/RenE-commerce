@@ -6,8 +6,10 @@ import com.reneprojects.components.productcarousel.model.CardCarouselData.IconTy
 import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.FURNITURE
 import com.reneprojects.components.productcarousel.model.CardCarouselData.IconType.GROCERIES
 import com.reneprojects.common.constants.CategorySlug
+import com.reneprojects.components.productcard.model.ProductCardData
 import com.reneprojects.core.common.result.RenEcommerceResult
 import com.reneprojects.core.feature.categories.repository.CategoriesRepository
+import com.reneprojects.core.feature.products.local.entity.ProductEntity
 import com.reneprojects.core.feature.products.repository.ProductRepository
 import com.reneprojects.feature.products.domain.mapper.ProductMapper
 import com.reneprojects.feature.products.model.LandingPageData
@@ -21,6 +23,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -47,6 +50,21 @@ internal interface ProductsInteractor {
      * @return A stream of landing sections.
      */
     fun observeProductSections(): Flow<List<LandingPageData>>
+
+    /**
+     * Exposes the flat product list for the selected category chip.
+     *
+     * Filtering happens in memory over the locally stored products; no extra API call is made.
+     * [CategorySlug.OTHERS] returns every product outside the supported categories.
+     *
+     * @param selectedCategory Stream of the selected category slug, or `null` when no chip is
+     * active.
+     * @return A stream of display-ready cards ordered by product id; empty when there is no
+     * selection.
+     */
+    fun observeProductListing(
+        selectedCategory: Flow<String?>
+    ): Flow<List<ProductCardData>>
 
     /**
      * Requests a data refresh for products and categories through the repositories.
@@ -90,6 +108,38 @@ internal class ProductsInteractorImpl @Inject constructor(
         }.flowOn(Dispatchers.Default)
     }
 
+    override fun observeProductListing(
+        selectedCategory: Flow<String?>
+    ): Flow<List<ProductCardData>> {
+        return combine(
+            productsRepository.observeProducts(),
+            selectedCategory
+        ) { products, category ->
+            if (category == null) {
+                emptyList()
+            } else {
+                mapper.toProductCards(
+                    products.filterByCategory(category = category)
+                )
+            }
+        }.flowOn(Dispatchers.Default)
+    }
+
+    private fun List<ProductEntity>.filterByCategory(
+        category: String
+    ): List<ProductEntity> {
+        val selectedCategory = category.trim().lowercase(Locale.ROOT)
+
+        return filter { product ->
+            val productCategory = product.category.trim().lowercase(Locale.ROOT)
+            if (selectedCategory == CategorySlug.OTHERS) {
+                productCategory !in SUPPORTED_CATEGORIES
+            } else {
+                productCategory == selectedCategory
+            }
+        }.sortedBy { it.id }
+    }
+
     private fun getIconSection(category: String): IconType? {
         return when (category.trim().lowercase()) {
             CategorySlug.FRAGRANCES -> FRAGRANCES
@@ -111,5 +161,14 @@ internal class ProductsInteractorImpl @Inject constructor(
             categoriesResult.await()
             productsResult
         }
+
+    private companion object Categories {
+        val SUPPORTED_CATEGORIES = setOf(
+            CategorySlug.FURNITURE,
+            CategorySlug.BEAUTY,
+            CategorySlug.FRAGRANCES,
+            CategorySlug.GROCERIES,
+        )
+    }
 }
 /** endregion implementation */

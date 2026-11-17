@@ -63,6 +63,14 @@ internal class ProductViewModelImpl @Inject constructor(
                 currentState.copy(selectedCategory = slug)
             }
         }.launchIn(viewModelScope)
+
+        interactor.observeProductListing(selectedCategory).onEach { products ->
+            _uiState.update { currentState ->
+                currentState.copy(filteredProducts = products)
+            }
+        }.catch { error ->
+            updateErrorState(error.message ?: "Unable to load filtered products")
+        }.launchIn(viewModelScope)
     }
 
     private fun observeProducts() {

@@ -6,6 +6,7 @@ import com.reneprojects.components.productcarousel.model.CardCarouselData.IconTy
 import com.reneprojects.components.productcarousel.model.CardCarouselData.ItemCard
 import com.reneprojects.components.productfilter.model.ItemFilterData
 import com.reneprojects.components.productfilter.model.ItemFilterData.IconType as FilterIconType
+import com.reneprojects.components.productcard.model.ProductCardData
 import com.reneprojects.common.constants.CategorySlug
 import com.reneprojects.core.feature.categories.local.entity.CategoryEntity
 import com.reneprojects.core.feature.products.local.entity.ProductEntity
@@ -16,7 +17,9 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import java.util.Locale
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 /** region module */
 @Module
@@ -48,21 +51,34 @@ internal interface ProductMapper {
      * @return The filter section, or `null` when no supported category is available.
      */
     fun toProductFilterSection(categories: List<CategoryEntity>): ProductFilterSectionData?
+
+    /**
+     * Maps products to display-ready cards for the filtered product list.
+     *
+     * @param products Products to render, already filtered and ordered.
+     * @return One [ProductCardData] per product, preserving the input order.
+     */
+    fun toProductCards(products: List<ProductEntity>): List<ProductCardData>
 }
 /** endregion abstraction */
 
 /** region implementation */
 internal class ProductMapperImpl @Inject constructor() : ProductMapper {
-    private companion object Labels {
+    private companion object Constants {
         private const val OTHERS_LABEL = "Others"
+        private const val PERCENT_DIVISOR = 100.0
     }
 
     private fun toProductItemCard(entity: ProductEntity): ItemCard =
         with(entity) {
+            val prices = toDisplayPrices()
             ItemCard(
                 id = id,
                 title = title,
-                formattedPrice = price.toPriceString(),
+                formattedPrice = prices.formattedPrice,
+                formattedOriginalPrice = prices.formattedOriginalPrice,
+                discountPercentage = prices.discountPercentage,
+                formattedRating = rating.takeIf { it > 0 }?.toRatingString(),
                 imageUrl = thumbnail,
                 category = category
             )
@@ -107,6 +123,54 @@ internal class ProductMapperImpl @Inject constructor() : ProductMapper {
             )
         )
     }
+
+    override fun toProductCards(products: List<ProductEntity>): List<ProductCardData> {
+        return products.map { entity ->
+            with(entity) {
+                val prices = toDisplayPrices()
+
+                ProductCardData(
+                    id = id,
+                    title = title,
+                    formattedPrice = prices.formattedPrice,
+                    formattedOriginalPrice = prices.formattedOriginalPrice,
+                    discountPercentage = prices.discountPercentage,
+                    formattedRating = rating.toRatingString(),
+                    brand = brand?.trim()?.takeIf { it.isNotBlank() },
+                    imageUrl = thumbnail,
+                )
+            }
+        }
+    }
+
+    /**
+     * Final price plus the original one when the product has a real discount.
+     *
+     * `price` is the pre-discount price; the badge uses the rounded discount and hides at 0.
+     */
+    private fun ProductEntity.toDisplayPrices(): DisplayPrices {
+        val roundedDiscount = discountPercentage.roundToInt()
+        val hasDiscount = roundedDiscount > 0
+        val originalPrice = price.toPriceString()
+
+        return DisplayPrices(
+            formattedPrice = if (hasDiscount) {
+                (price * (1 - discountPercentage / PERCENT_DIVISOR)).toPriceString()
+            } else {
+                originalPrice
+            },
+            formattedOriginalPrice = originalPrice.takeIf { hasDiscount },
+            discountPercentage = roundedDiscount.takeIf { hasDiscount },
+        )
+    }
+
+    private fun Double.toRatingString(): String = String.format(Locale.ROOT, "%.1f", this)
+
+    private data class DisplayPrices(
+        val formattedPrice: String,
+        val formattedOriginalPrice: String?,
+        val discountPercentage: Int?,
+    )
 
     private fun String.toFilterIconType(): FilterIconType? = when (this) {
         CategorySlug.FURNITURE -> FilterIconType.FURNITURE

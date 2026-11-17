@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,13 +26,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.reneprojects.R
+import com.reneprojects.common.constants.CategorySlug
 import com.reneprojects.components.productfilter.model.ItemFilterData
 import com.reneprojects.components.productfilter.model.ItemFilterData.IconType
 import com.reneprojects.components.productfilter.model.ItemFilterData.IconType.BEAUTY
 import com.reneprojects.components.productfilter.model.ItemFilterData.IconType.FRAGRANCES
 import com.reneprojects.components.productfilter.model.ItemFilterData.IconType.FURNITURE
 import com.reneprojects.components.productfilter.model.ItemFilterData.IconType.GROCERIES
-import com.reneprojects.common.constants.CategorySlug
 import com.reneprojects.ui.theme.RenEcommerceTheme
 
 @Composable
@@ -39,11 +40,12 @@ internal fun ProductFilterSection(
     filters: List<ItemFilterData>,
     selectedSlug: String?,
     onFilterSelected: (String?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp),
 ) {
     LazyRow(
-        modifier = modifier.background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(horizontal = 16.dp),
+        modifier = modifier.background(colorScheme.background),
+        contentPadding = contentPadding,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(filters, key = { it.slug }) { filter ->
@@ -68,7 +70,7 @@ private fun ProductFilterChip(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(28.dp),
         color = if (selected) {
-            Color(0xFFFF1F1F)
+            colorScheme.primary
         } else {
             Color.White
         },
@@ -77,7 +79,7 @@ private fun ProductFilterChip(
         } else {
             BorderStroke(
                 width = 1.dp,
-                color = Color(0xFFE1E5EA)
+                color = colorScheme.onPrimary
             )
         },
     ) {
