@@ -23,6 +23,7 @@ internal fun PageContent(
                 modifier = modifier,
                 landingPageData = uiState.landingPageData,
                 filteredProducts = uiState.filteredProducts,
+                isFilterLoading = uiState.isFilterLoading,
                 isRefreshing = uiState.isLoading,
                 onRefresh = viewModel::refreshProducts,
                 navigateToProductCategory = {// TODO IMPLEMENT NAVIGATION WITH NavGraph

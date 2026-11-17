@@ -4,8 +4,9 @@ longer useful.
 ## Current status
 - Android app (Kotlin, Jetpack Compose, Material 3) with a working product catalog:
   remote API + Room cache + home screen (`HomePageActivity`).
-- Landing page: sticky chip row from `GET /products/categories`. Tapping a chip swaps the
-  carousels for a 2-column product grid; tapping the active chip clears the filter.
+- Landing page: fixed chip row from `GET /products/categories`. Tapping a chip enters the
+  2-column grid through a shimmer skeleton (>= 350 ms) only when coming from the carousels;
+  switching categories updates the grid in place. Tapping the active chip clears the filter.
   "Others" = categories outside the 4 supported.
 - Grid cards: 4:5 image, height driven by content, badge below the title, both prices and
   rating (`components/discountbadge`, `components/productcard`).
@@ -28,16 +29,16 @@ longer useful.
   order by `id`. No endpoint per filter.
 - Selection persists in `SavedStateHandle` (`"selected_category"`) and mirrors into
   `LandingUiState.selectedCategory`; cards live in `LandingUiState.filteredProducts`.
-- `ProductsSection` gates the filtered mode on the chip row existing; each mode has its own
-  scroll state and both reset to item 0 on filter change.
+- Filter loading: the ViewModel only owns `LandingUiState.isFilterLoading` (data state); the
+  350 ms minimum lives in `ProductsSection` with `rememberSaveable` so rotation does not replay
+  the skeleton. Never inferred from an empty list.
 - Prices: `ProductEntity.price` is the pre-discount price; final = `price * (1 - d/100)`.
   The badge shows `roundToInt()` and hides at 0. Both cards share `toDisplayPrices()`.
-- Margins: grid `contentPadding` 16.dp horizontal; 8.dp between cards; the chip row gets
-  `contentPadding = 0` inside the grid header to avoid doubling the margin.
+- Margins: grid `contentPadding` 16.dp horizontal; 8.dp between cards.
 ## Learnings and mistakes to avoid
 - Room changes need schema + migration updates (`app/schemas`).
-- Compose 1.12: `stickyHeader` is a member of `LazyListScope` and `LazyGridScope`
-  (full-span in grids); never import it as an extension.
+- Compose 1.12: `stickyHeader` exists in list and grid scopes, but the chip row is now a fixed
+  header. Lazy states must live outside `AnimatedContent` or they restart on each transition.
 - Material 3 `Card` does not clip its content: clip card images manually (top corners).
 - `:app:lintDebug` fails pre-analysis: `ui-test-junit4` (androidTest) lacks a version because
   the Compose BOM is only in `implementation`. Pre-existing; assemble/tests unaffected.

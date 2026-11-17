@@ -66,7 +66,10 @@ internal class ProductViewModelImpl @Inject constructor(
 
         interactor.observeProductListing(selectedCategory).onEach { products ->
             _uiState.update { currentState ->
-                currentState.copy(filteredProducts = products)
+                currentState.copy(
+                    filteredProducts = products,
+                    isFilterLoading = false,
+                )
             }
         }.catch { error ->
             updateErrorState(error.message ?: "Unable to load filtered products")
@@ -106,6 +109,7 @@ internal class ProductViewModelImpl @Inject constructor(
         _uiState.update { currentState ->
             currentState.copy(
                 isLoading = false,
+                isFilterLoading = false,
                 errorMessage = message
             )
         }
@@ -144,6 +148,17 @@ internal class ProductViewModelImpl @Inject constructor(
 
     override fun onFilterSelected(slug: String?) {
         val newSelection = if (selectedCategory.value == slug) null else slug
+        // Data-state only: the shimmer minimum duration is a presentation concern owned by the UI.
+        when {
+            newSelection == null -> _uiState.update { currentState ->
+                currentState.copy(isFilterLoading = false)
+            }
+
+            // Category-to-category switches update the grid in place, without shimmer.
+            selectedCategory.value == null -> _uiState.update { currentState ->
+                currentState.copy(isFilterLoading = true)
+            }
+        }
         savedStateHandle[SELECTED_CATEGORY] = newSelection
     }
 

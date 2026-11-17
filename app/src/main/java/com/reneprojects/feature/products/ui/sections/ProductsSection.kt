@@ -1,7 +1,14 @@
 package com.reneprojects.feature.products.ui.sections
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -18,6 +25,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -29,16 +40,27 @@ import com.reneprojects.components.productfilter.view.ProductFilterSection
 import com.reneprojects.feature.products.model.LandingPageData
 import com.reneprojects.feature.products.model.LandingPageData.ProductCarouselSectionData
 import com.reneprojects.feature.products.model.LandingPageData.ProductFilterSectionData
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
-private const val FILTER_SECTION_KEY = "product_filter"
 private const val GRID_COLUMNS = 2
 private const val SCREEN_HORIZONTAL_PADDING = 16
 private const val CARD_SPACING = 8
+private const val CONTENT_TOP_PADDING = 8
+private const val CONTENT_FADE_DURATION_MS = 200
+private const val MIN_SKELETON_DURATION_MS = 350L
+
+private enum class ProductsContent {
+    Carousels,
+    Filtering,
+    Filtered,
+}
 
 @Composable
 internal fun ProductsSection(
     landingPageData: List<LandingPageData>,
     filteredProducts: List<ProductCardData>,
+    isFilterLoading: Boolean,
     modifier: Modifier,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
@@ -56,14 +78,33 @@ internal fun ProductsSection(
         .firstOrNull()
 
     // Without the chip row there is no way to clear the filter, so keep the carousels visible.
-    val visibleFilterSection = filterSection.takeIf { selectedCategory != null }
+    val isFiltered = selectedCategory != null && filterSection != null
+
+    // Keyed on `isFiltered`: re-entering from the carousels restarts the minimum, while switching
+    // categories keeps it. Saveable so a rotation does not replay the skeleton.
+    var isMinimumSkeletonTimeElapsed by rememberSaveable(isFiltered) {
+        mutableStateOf(!isFiltered)
+    }
+
+    LaunchedEffect(isFiltered) {
+        if (isFiltered && !isMinimumSkeletonTimeElapsed) {
+            delay(MIN_SKELETON_DURATION_MS.milliseconds)
+            isMinimumSkeletonTimeElapsed = true
+        }
+    }
 
     LaunchedEffect(selectedCategory) {
-        if (visibleFilterSection != null) {
+        if (selectedCategory != null) {
             gridState.scrollToItem(0)
         } else {
             listState.scrollToItem(0)
         }
+    }
+
+    val contentMode = when {
+        !isFiltered -> ProductsContent.Carousels
+        isFilterLoading || !isMinimumSkeletonTimeElapsed -> ProductsContent.Filtering
+        else -> ProductsContent.Filtered
     }
 
     PullToRefreshBox(
@@ -77,25 +118,50 @@ internal fun ProductsSection(
             .fillMaxWidth()
             .then(modifier)
     ) {
-        if (visibleFilterSection != null) {
-            FilteredProductsGrid(
-                products = filteredProducts,
-                filterSection = visibleFilterSection,
-                selectedCategory = selectedCategory,
-                onFilterSelected = onFilterSelected,
-                gridState = gridState,
-                navigateToProductDetails = navigateToProductDetails,
-            )
-        } else {
-            LandingSectionsList(
-                landingPageData = landingPageData,
-                filterSection = filterSection,
-                selectedCategory = selectedCategory,
-                onFilterSelected = onFilterSelected,
-                listState = listState,
-                navigateToProductCategory = navigateToProductCategory,
-                navigateToProductDetails = navigateToProductDetails,
-            )
+        Column(modifier = Modifier.fillMaxSize()) {
+            filterSection?.let { section ->
+                Surface(
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    ProductFilterSection(
+                        filters = section.filters,
+                        selectedSlug = selectedCategory,
+                        onFilterSelected = onFilterSelected
+                    )
+                }
+            }
+
+            AnimatedContent(
+                targetState = contentMode,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                transitionSpec = {
+                    fadeIn(
+                        animationSpec = tween(CONTENT_FADE_DURATION_MS)
+                    ) togetherWith fadeOut(
+                        animationSpec = tween(CONTENT_FADE_DURATION_MS)
+                    )
+                },
+                label = "products_content"
+            ) { productsContent ->
+                when (productsContent) {
+                    ProductsContent.Carousels -> LandingSectionsList(
+                        landingPageData = landingPageData,
+                        listState = listState,
+                        navigateToProductCategory = navigateToProductCategory,
+                        navigateToProductDetails = navigateToProductDetails,
+                    )
+
+                    ProductsContent.Filtering -> LoadingFilteredProductsSkeleton()
+
+                    ProductsContent.Filtered -> FilteredProductsGrid(
+                        products = filteredProducts,
+                        gridState = gridState,
+                        navigateToProductDetails = navigateToProductDetails,
+                    )
+                }
+            }
         }
     }
 }
@@ -103,39 +169,23 @@ internal fun ProductsSection(
 @Composable
 private fun FilteredProductsGrid(
     products: List<ProductCardData>,
-    filterSection: ProductFilterSectionData,
-    selectedCategory: String?,
-    onFilterSelected: (String?) -> Unit,
     gridState: LazyGridState,
     navigateToProductDetails: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(GRID_COLUMNS),
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxSize(),
         state = gridState,
         contentPadding = PaddingValues(
             start = SCREEN_HORIZONTAL_PADDING.dp,
             end = SCREEN_HORIZONTAL_PADDING.dp,
+            top = CONTENT_TOP_PADDING.dp,
             bottom = 16.dp,
         ),
         horizontalArrangement = Arrangement.spacedBy(CARD_SPACING.dp),
         verticalArrangement = Arrangement.spacedBy(CARD_SPACING.dp),
     ) {
-        stickyHeader(key = FILTER_SECTION_KEY) {
-            Surface(
-                color = MaterialTheme.colorScheme.background,
-            ) {
-                ProductFilterSection(
-                    filters = filterSection.filters,
-                    selectedSlug = selectedCategory,
-                    onFilterSelected = onFilterSelected,
-                    // The grid already applies the screen margins to the full-span header.
-                    contentPadding = PaddingValues(0.dp),
-                )
-            }
-        }
-
         items(
             items = products,
             key = { it.id },
@@ -151,9 +201,6 @@ private fun FilteredProductsGrid(
 @Composable
 private fun LandingSectionsList(
     landingPageData: List<LandingPageData>,
-    filterSection: ProductFilterSectionData?,
-    selectedCategory: String?,
-    onFilterSelected: (String?) -> Unit,
     listState: LazyListState,
     navigateToProductCategory: (Int) -> Unit,
     navigateToProductDetails: (Int) -> Unit,
@@ -162,20 +209,6 @@ private fun LandingSectionsList(
         state = listState,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        filterSection?.let {
-            stickyHeader(key = FILTER_SECTION_KEY) {
-                Surface(
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    ProductFilterSection(
-                        filters = filterSection.filters,
-                        selectedSlug = selectedCategory,
-                        onFilterSelected = onFilterSelected
-                    )
-                }
-            }
-        }
-
         itemsIndexed(
             items = landingPageData.filterIsInstance<ProductCarouselSectionData>(),
             key = { index, section -> section.composeKey(index) }
@@ -193,6 +226,6 @@ private fun LandingSectionsList(
 private fun LandingPageData.composeKey(index: Int): String {
     return when (this) {
         is ProductCarouselSectionData -> "product_carousel-${cardCarouselData.header}-$index"
-        is ProductFilterSectionData -> FILTER_SECTION_KEY
+        is ProductFilterSectionData -> "product_filter-$index"
     }
 }
