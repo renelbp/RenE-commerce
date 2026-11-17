@@ -1,0 +1,105 @@
+package com.reneprojects.core.feature.{{feature}}.remote.datasource
+
+import com.reneprojects.core.common.remote.RemoteResult
+import com.reneprojects.core.feature.{{feature}}.remote.dto.{{EntityName}}Dto
+import com.reneprojects.core.feature.{{feature}}.remote.dto.{{Feature}}ResponseDto
+import com.reneprojects.core.network.api.RenEcommerceApiService
+import kotlinx.coroutines.runBlocking
+import okhttp3.Headers
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.Mock
+import org.mockito.Mockito.`when`
+import org.mockito.MockitoAnnotations
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import retrofit2.Response
+
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
+internal class {{Feature}}RemoteDataSourceTest {
+
+    @Mock
+    private lateinit var apiService: RenEcommerceApiService
+
+    // Retrofit's Response is final; Mockito 5 mocks it with the inline mock maker.
+    @Mock
+    private lateinit var mockedResponse: Response<{{Feature}}ResponseDto>
+
+    private lateinit var dataSource: {{Feature}}RemoteDataSourceImpl
+
+    @Before
+    fun setUp() {
+        MockitoAnnotations.openMocks(this)
+        dataSource = {{Feature}}RemoteDataSourceImpl(apiService = apiService)
+    }
+
+    @Test
+    fun fetch_returnsNotModified_whenServerAnswers304() = runBlocking {
+        `when`(mockedResponse.code()).thenReturn(304)
+        `when`(apiService.get{{Feature}}Response(eTag = "\"abc\"")).thenReturn(mockedResponse)
+
+        assertEquals(
+            RemoteResult.NotModified,
+            dataSource.fetch{{Feature}}(eTag = "\"abc\"")
+        )
+    }
+
+    @Test
+    fun fetch_returnsSuccessAndETag_whenBodyIsPresent() = runBlocking {
+        val dto = {{EntityName}}Dto(id = 1)
+        val response = Response.success(
+            {{Feature}}ResponseDto(items = listOf(dto)),
+            Headers.headersOf("ETag", "\"abc\"")
+        )
+        `when`(apiService.get{{Feature}}Response(eTag = null)).thenReturn(response)
+
+        assertEquals(
+            RemoteResult.Success(data = listOf(dto), eTag = "\"abc\""),
+            dataSource.fetch{{Feature}}(eTag = null)
+        )
+    }
+
+    @Test
+    fun fetch_returnsError_whenBodyIsNull() = runBlocking {
+        `when`(mockedResponse.code()).thenReturn(200)
+        `when`(mockedResponse.isSuccessful).thenReturn(true)
+        `when`(mockedResponse.body()).thenReturn(null)
+        `when`(apiService.get{{Feature}}Response(eTag = null)).thenReturn(mockedResponse)
+
+        val result = dataSource.fetch{{Feature}}(eTag = null)
+
+        assertTrue(result is RemoteResult.Error)
+        assertEquals("Empty response body", (result as RemoteResult.Error).message)
+    }
+
+    @Test
+    fun fetch_returnsError_whenServerFails() = runBlocking {
+        val response = Response.error<{{Feature}}ResponseDto>(
+            500,
+            "{}".toResponseBody("application/json".toMediaType())
+        )
+        `when`(apiService.get{{Feature}}Response(eTag = null)).thenReturn(response)
+
+        val result = dataSource.fetch{{Feature}}(eTag = null)
+
+        assertTrue(result is RemoteResult.Error)
+        assertEquals(500, (result as RemoteResult.Error).code)
+    }
+
+    @Test
+    fun fetch_returnsError_whenCallThrows() = runBlocking {
+        `when`(apiService.get{{Feature}}Response(eTag = null))
+            .thenThrow(RuntimeException("boom"))
+
+        val result = dataSource.fetch{{Feature}}(eTag = null)
+
+        assertTrue(result is RemoteResult.Error)
+        assertEquals(-1, (result as RemoteResult.Error).code)
+    }
+}

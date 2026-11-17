@@ -1,0 +1,42 @@
+package com.reneprojects.components.{{component}}.model
+
+/**
+ * Presentation model for the {{Component}} section.
+ *
+ * Display-ready values only: no DTOs, entities, Compose types, resources or formatting logic.
+ *
+ * @property header Text and icon shown above the list.
+ * @property items Items rendered by the section, in display order.
+ */
+internal data class {{Component}}Data(
+    val header: {{Component}}Header,
+    val items: List<{{Item}}>,
+) {
+    /**
+     * @property id Stable identity: list key and callback payload.
+     * @property title Already-formatted main text.
+     * @property imageUrl Remote image; `null` renders the fallback painter.
+     */
+    data class {{Item}}(
+        val id: Int,
+        val title: String,
+        val imageUrl: String?,
+    )
+
+    /**
+     * @property iconType Optional icon variant; the view maps it to a drawable.
+     * @property label Already-capitalized section label.
+     * @property linkId Identity passed when the "view all" action is tapped.
+     */
+    data class {{Component}}Header(
+        val iconType: IconType?,
+        val label: String,
+        val linkId: Int,
+    )
+
+    /** Icon variants the view maps to drawables and theme colors. */
+    enum class IconType {
+        {{ICON_ONE}},
+        {{ICON_TWO}},
+    }
+}

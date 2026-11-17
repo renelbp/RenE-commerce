@@ -1,0 +1,11 @@
+package com.reneprojects.core.feature.{{feature}}.remote.dto
+
+import com.google.gson.annotations.SerializedName
+
+// Wrapped list: { "{{itemsField}}": [ ... ] }.
+// If the endpoint returns a bare JSON array, drop this DTO and have the service return
+// Response<List<{{EntityName}}Dto>> instead.
+internal data class {{Feature}}ResponseDto(
+    @SerializedName("{{itemsField}}")
+    val items: List<{{EntityName}}Dto> = emptyList()
+)

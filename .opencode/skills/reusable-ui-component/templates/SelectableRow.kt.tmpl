@@ -1,0 +1,150 @@
+package com.reneprojects.components.{{component}}.view
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.reneprojects.R
+import com.reneprojects.components.{{component}}.model.{{Item}}
+import com.reneprojects.components.{{component}}.model.{{Item}}.IconType
+import com.reneprojects.ui.theme.RenEcommerceTheme
+
+/**
+ * Single-selection row. The caller owns the selection: [onItemSelected] receives the tapped key and
+ * decides whether it becomes the new selection or toggles off.
+ *
+ * @param items Items to render, in display order.
+ * @param selectedKey Currently selected key, or `null` when nothing is selected.
+ * @param onItemSelected Called with the tapped item key.
+ */
+@Composable
+internal fun {{Component}}Row(
+    items: List<{{Item}}>,
+    selectedKey: String?,
+    onItemSelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(items, key = { it.key }) { item ->
+            {{Component}}Chip(
+                item = item,
+                selected = item.key == selectedKey,
+                onClick = { onItemSelected(item.key) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun {{Component}}Chip(
+    item: {{Item}},
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.semantics { this.selected = selected },
+        shape = RoundedCornerShape(28.dp),
+        color = if (selected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
+        contentColor = if (selected) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        },
+        border = if (selected) {
+            null
+        } else {
+            BorderStroke(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+        },
+    ) {
+        Row(
+            modifier = Modifier.padding(
+                vertical = 8.dp,
+                horizontal = 12.dp,
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item.iconType?.let { iconType ->
+                val drawableRes = iconRes(iconType) ?: return@let
+                Icon(
+                    painter = painterResource(id = drawableRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+
+            Text(
+                text = item.label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/** Maps model icon variants to drawables. Unknown variants render without an icon. */
+private fun iconRes(iconType: IconType?): Int? = when (iconType) {
+    IconType.{{ICON_ONE}} -> R.drawable.{{icon_one_drawable}}
+    IconType.{{ICON_TWO}} -> R.drawable.{{icon_two_drawable}}
+    null -> null
+}
+
+@Preview
+@Composable
+private fun {{Component}}RowPreview() {
+    RenEcommerceTheme(dynamicColor = false) {
+        Surface {
+            {{Component}}Row(
+                items = listOf(
+                    {{Item}}(
+                        key = "{{key_one}}",
+                        label = "{{LabelOne}}",
+                        iconType = IconType.{{ICON_ONE}},
+                    ),
+                    {{Item}}(
+                        key = "{{key_two}}",
+                        label = "{{LabelTwo}}",
+                        iconType = null,
+                    ),
+                ),
+                selectedKey = "{{key_one}}",
+                onItemSelected = {},
+            )
+        }
+    }
+}

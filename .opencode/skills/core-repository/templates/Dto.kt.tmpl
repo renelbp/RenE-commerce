@@ -1,0 +1,12 @@
+package com.reneprojects.core.feature.{{feature}}.remote.dto
+
+import com.google.gson.annotations.SerializedName
+
+// Nullable with defaults on purpose: a missing or malformed field must not crash the sync.
+// Keep @SerializedName exactly as the API sends it.
+internal data class {{EntityName}}Dto(
+    @SerializedName("id")
+    val id: Int? = null,
+    @SerializedName("name")
+    val name: String? = null
+)

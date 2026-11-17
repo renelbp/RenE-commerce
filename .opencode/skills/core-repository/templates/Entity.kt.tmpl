@@ -1,0 +1,13 @@
+package com.reneprojects.core.feature.{{feature}}.local.entity
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+// The primary key must be non-null. Replace the fields with the ones the API returns;
+// keep nullability aligned with the SQL used in the migration.
+@Entity(tableName = "{{table}}")
+data class {{Entity}}(
+    @PrimaryKey
+    val id: Int,
+    val name: String
+)

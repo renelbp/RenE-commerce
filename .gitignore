@@ -14,3 +14,11 @@
 .cxx
 local.properties
 app/schemas
+
+# Agent tooling, skills and local project memory (not shared in git)
+.opencode/
+.claude/
+.agents/
+AGENTS.md
+MEMORY.md
+

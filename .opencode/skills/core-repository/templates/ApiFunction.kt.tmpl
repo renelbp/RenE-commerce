@@ -1,0 +1,13 @@
+// Add this function to the shared service: no new ApiService, no new Retrofit.
+// File: app/src/main/java/com/reneprojects/core/network/api/RenEcommerceApiService.kt
+//
+// Add the imports it needs at the top of that file:
+//   import com.reneprojects.core.feature.{{feature}}.remote.dto.{{Feature}}ResponseDto
+//   import retrofit2.Response
+//   import retrofit2.http.GET
+//   import retrofit2.http.Header
+
+@GET("{{endpoint}}")
+suspend fun get{{Feature}}Response(
+    @Header("If-None-Match") eTag: String? = null
+): Response<{{Feature}}ResponseDto>

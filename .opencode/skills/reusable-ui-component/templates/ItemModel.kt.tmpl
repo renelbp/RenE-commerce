@@ -1,0 +1,22 @@
+package com.reneprojects.components.{{component}}.model
+
+/**
+ * Presentation model for one item of the {{Component}} row (chips, tabs, filters).
+ *
+ * Display-ready values only: the view maps [iconType] to a drawable and theme color.
+ *
+ * @property key Stable identity: list key and callback payload.
+ * @property label Already-formatted text.
+ * @property iconType Optional icon variant; `null` renders a text-only chip.
+ */
+internal data class {{Item}}(
+    val key: String,
+    val label: String,
+    val iconType: IconType?,
+) {
+    /** Icon variants the view maps to drawables. */
+    enum class IconType {
+        {{ICON_ONE}},
+        {{ICON_TWO}},
+    }
+}

@@ -1,0 +1,45 @@
+package com.reneprojects.core.feature.{{feature}}.mapper
+
+import com.reneprojects.core.feature.{{feature}}.local.entity.{{Entity}}
+import com.reneprojects.core.feature.{{feature}}.remote.dto.{{EntityName}}Dto
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/** region module */
+@Module
+@InstallIn(SingletonComponent::class)
+internal interface {{Entity}}MapperModule {
+    @Binds
+    @Singleton
+    fun bind{{Entity}}Mapper(
+        implementation: {{Entity}}MapperImpl
+    ): {{Entity}}Mapper
+}
+/** endregion module */
+
+/** region abstraction */
+internal interface {{Entity}}Mapper {
+    /**
+     * Maps a [{{EntityName}}Dto] received from the network to a [{{Entity}}] for local storage.
+     *
+     * @param dto The data transfer object from the API.
+     * @return A database-ready entity.
+     */
+    fun to{{Entity}}(dto: {{EntityName}}Dto): {{Entity}}
+}
+/** endregion abstraction */
+
+/** region implementation */
+internal class {{Entity}}MapperImpl @Inject constructor() : {{Entity}}Mapper {
+    override fun to{{Entity}}(dto: {{EntityName}}Dto): {{Entity}} {
+        return {{Entity}}(
+            id = dto.id ?: 0,
+            name = dto.name.orEmpty()
+        )
+    }
+}
+/** endregion implementation */

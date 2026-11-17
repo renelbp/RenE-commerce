@@ -1,0 +1,139 @@
+package com.reneprojects.core.feature.{{feature}}.repository
+
+import com.reneprojects.core.common.cachemanager.manager.CacheManager
+import com.reneprojects.core.common.cachemanager.model.CacheStatus
+import com.reneprojects.core.common.constants.CacheKeys
+import com.reneprojects.core.common.constants.CachePolicy
+import com.reneprojects.core.common.remote.RemoteResult
+import com.reneprojects.core.common.result.RenEcommerceResult
+import com.reneprojects.core.feature.{{feature}}.local.dao.{{EntityName}}Dao
+import com.reneprojects.core.feature.{{feature}}.local.entity.{{Entity}}
+import com.reneprojects.core.feature.{{feature}}.mapper.{{Entity}}Mapper
+import com.reneprojects.core.feature.{{feature}}.remote.datasource.{{Feature}}RemoteDataSource
+import com.reneprojects.core.feature.{{feature}}.remote.dto.{{EntityName}}Dto
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.Mock
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.MockitoAnnotations
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
+internal class {{Feature}}RepositoryTest {
+
+    @Mock
+    private lateinit var remoteDataSource: {{Feature}}RemoteDataSource
+
+    @Mock
+    private lateinit var dao: {{EntityName}}Dao
+
+    @Mock
+    private lateinit var cacheManager: CacheManager
+
+    @Mock
+    private lateinit var mapper: {{Entity}}Mapper
+
+    private lateinit var repository: {{Feature}}RepositoryImpl
+
+    private val cacheKey = CacheKeys.{{CACHE_KEY}}
+
+    @Before
+    fun setUp() {
+        MockitoAnnotations.openMocks(this)
+        repository = {{Feature}}RepositoryImpl(
+            remoteDataSource = remoteDataSource,
+            {{entity}}Dao = dao,
+            cacheManager = cacheManager,
+            {{entity}}Mapper = mapper
+        )
+    }
+
+    @Test
+    fun load_skipsRemoteCall_whenCacheIsValidAndRefreshIsNotForced() = runBlocking {
+        `when`(cacheManager.getStatus(cacheKey)).thenReturn(cacheStatus(isValid = true))
+
+        val result = repository.load{{Feature}}Data(forceRefresh = false)
+
+        assertTrue(result is RenEcommerceResult.Success)
+        verifyNoInteractions(remoteDataSource)
+    }
+
+    @Test
+    fun load_fetchesRemote_whenRefreshIsForcedEvenIfCacheIsValid() = runBlocking {
+        `when`(cacheManager.getStatus(cacheKey)).thenReturn(cacheStatus(isValid = true))
+        `when`(remoteDataSource.fetch{{Feature}}(eTag = "\"abc\""))
+            .thenReturn(RemoteResult.NotModified)
+
+        val result = repository.load{{Feature}}Data(forceRefresh = true)
+
+        assertTrue(result is RenEcommerceResult.Success)
+        verify(remoteDataSource).fetch{{Feature}}(eTag = "\"abc\"")
+    }
+
+    @Test
+    fun load_renewsCacheWithoutWriting_whenRemoteReturnsNotModified() = runBlocking {
+        `when`(cacheManager.getStatus(cacheKey)).thenReturn(cacheStatus(isValid = false))
+        `when`(remoteDataSource.fetch{{Feature}}(eTag = "\"abc\""))
+            .thenReturn(RemoteResult.NotModified)
+
+        val result = repository.load{{Feature}}Data(forceRefresh = false)
+
+        assertTrue(result is RenEcommerceResult.Success)
+        verifyNoInteractions(dao)
+        verify(cacheManager).updateCache(
+            key = cacheKey,
+            expirationTimeMillis = CachePolicy.{{CACHE_KEY}}_TTL,
+            eTag = "\"abc\""
+        )
+    }
+
+    @Test
+    fun load_mapsReplacesAndUpdatesCache_whenRemoteReturnsSuccess() = runBlocking {
+        val dto = {{EntityName}}Dto(id = 1)
+        val entity = {{Entity}}(id = 1, name = "name")
+        `when`(cacheManager.getStatus(cacheKey)).thenReturn(cacheStatus(isValid = false, eTag = null))
+        `when`(remoteDataSource.fetch{{Feature}}(eTag = null)).thenReturn(
+            RemoteResult.Success(data = listOf(dto), eTag = "\"new\"")
+        )
+        `when`(mapper.to{{Entity}}(dto)).thenReturn(entity)
+
+        val result = repository.load{{Feature}}Data(forceRefresh = false)
+
+        assertTrue(result is RenEcommerceResult.Success)
+        verify(dao).replace{{Feature}}(items = listOf(entity))
+        verify(cacheManager).updateCache(
+            key = cacheKey,
+            expirationTimeMillis = CachePolicy.{{CACHE_KEY}}_TTL,
+            eTag = "\"new\""
+        )
+    }
+
+    @Test
+    fun load_returnsErrorAndKeepsLocalData_whenRemoteFails() = runBlocking {
+        `when`(cacheManager.getStatus(cacheKey)).thenReturn(cacheStatus(isValid = false))
+        `when`(remoteDataSource.fetch{{Feature}}(eTag = "\"abc\""))
+            .thenReturn(RemoteResult.Error(code = 500, message = "Server Error"))
+
+        val result = repository.load{{Feature}}Data(forceRefresh = false)
+
+        assertTrue(result is RenEcommerceResult.Error)
+        verifyNoInteractions(dao)
+    }
+
+    private fun cacheStatus(isValid: Boolean, eTag: String? = "\"abc\""): CacheStatus {
+        return CacheStatus(
+            exists = true,
+            isValid = isValid,
+            fetchedAtMillis = 1L,
+            expiredAtMillis = 2L,
+            eTag = eTag
+        )
+    }
+}

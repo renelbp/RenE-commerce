@@ -1,0 +1,50 @@
+package com.reneprojects.core.feature.{{feature}}.remote.datasource
+
+import com.reneprojects.core.common.remote.RemoteResult
+import com.reneprojects.core.common.remote.safeRemoteCall
+import com.reneprojects.core.feature.{{feature}}.remote.dto.{{EntityName}}Dto
+import com.reneprojects.core.network.api.RenEcommerceApiService
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/** region module */
+@Module
+@InstallIn(SingletonComponent::class)
+internal interface {{Feature}}RemoteDataSourceModule {
+    @Binds
+    @Singleton
+    fun bind{{Feature}}RemoteDataSource(
+        implementation: {{Feature}}RemoteDataSourceImpl
+    ): {{Feature}}RemoteDataSource
+}
+/** endregion module */
+
+/** region abstraction */
+internal interface {{Feature}}RemoteDataSource {
+    /**
+     * Fetches {{feature}} from the remote API using an optional `ETag` for cache validation.
+     *
+     * @param eTag The `ETag` of the last successful fetch, or `null` if none was stored.
+     * @return A [RemoteResult] wrapping the API response.
+     */
+    suspend fun fetch{{Feature}}(eTag: String?): RemoteResult<List<{{EntityName}}Dto>>
+}
+/** endregion abstraction */
+
+/** region implementation */
+internal class {{Feature}}RemoteDataSourceImpl @Inject constructor(
+    private val apiService: RenEcommerceApiService
+) : {{Feature}}RemoteDataSource {
+
+    override suspend fun fetch{{Feature}}(eTag: String?): RemoteResult<List<{{EntityName}}Dto>> {
+        return safeRemoteCall(
+            call = { apiService.get{{Feature}}Response(eTag = eTag) },
+            extract = { it.items }
+        )
+    }
+}
+/** endregion implementation */

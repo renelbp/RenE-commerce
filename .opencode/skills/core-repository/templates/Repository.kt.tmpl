@@ -1,0 +1,136 @@
+package com.reneprojects.core.feature.{{feature}}.repository
+
+import com.reneprojects.core.common.cachemanager.manager.CacheManager
+import com.reneprojects.core.common.cachemanager.model.CacheStatus
+import com.reneprojects.core.common.constants.CacheKeys
+import com.reneprojects.core.common.constants.CachePolicy
+import com.reneprojects.core.common.remote.RemoteResult
+import com.reneprojects.core.common.result.RenEcommerceResult
+import com.reneprojects.core.feature.{{feature}}.local.dao.{{EntityName}}Dao
+import com.reneprojects.core.feature.{{feature}}.local.entity.{{Entity}}
+import com.reneprojects.core.feature.{{feature}}.mapper.{{Entity}}Mapper
+import com.reneprojects.core.feature.{{feature}}.mapper.{{Entity}}MapperModule
+import com.reneprojects.core.feature.{{feature}}.remote.datasource.{{Feature}}RemoteDataSource
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/** region module */
+@Module(
+    includes = [
+        {{Entity}}MapperModule::class
+    ]
+)
+@InstallIn(SingletonComponent::class)
+internal interface {{Feature}}RepositoryModule {
+    @Binds
+    @Singleton
+    fun bind{{Feature}}Repository(
+        implementation: {{Feature}}RepositoryImpl
+    ): {{Feature}}Repository
+}
+/** endregion module */
+
+/** region abstraction */
+interface {{Feature}}Repository {
+    /**
+     * Exposes the locally stored {{feature}} and keeps the UI in sync with Room.
+     *
+     * @return A stream of {{feature}} read from the database.
+     */
+    fun observe{{Feature}}(): Flow<List<{{Entity}}>>
+
+    /**
+     * Synchronizes local data with the remote endpoint, honoring the cache policy.
+     *
+     * @param forceRefresh Whether to bypass local cache validation.
+     * @return The result of the load operation.
+     */
+    suspend fun load{{Feature}}Data(forceRefresh: Boolean = false): RenEcommerceResult<Unit>
+}
+/** endregion abstraction */
+
+/** region implementation */
+internal class {{Feature}}RepositoryImpl @Inject constructor(
+    private val remoteDataSource: {{Feature}}RemoteDataSource,
+    private val {{entity}}Dao: {{EntityName}}Dao,
+    private val cacheManager: CacheManager,
+    private val {{entity}}Mapper: {{Entity}}Mapper
+) : {{Feature}}Repository {
+
+    override fun observe{{Feature}}(): Flow<List<{{Entity}}>> {
+        return {{entity}}Dao.observe{{Feature}}()
+    }
+
+    override suspend fun load{{Feature}}Data(forceRefresh: Boolean): RenEcommerceResult<Unit> =
+        withContext(Dispatchers.IO) {
+            val cacheKey = CacheKeys.{{CACHE_KEY}}
+            val cacheStatus = cacheManager.getStatus(cacheKey)
+
+            if (!forceRefresh && cacheStatus.isValid) {
+                RenEcommerceResult.Success(Unit)
+            } else {
+                update{{Feature}}(
+                    cacheKey = cacheKey,
+                    cacheStatus = cacheStatus
+                )
+            }
+        }
+
+    /**
+     * Synchronizes local {{feature}} with the remote response using `ETag`\-based cache control.
+     *
+     * Behavior:
+     * \- `NotModified`: refreshes cache validity without changing local data.
+     * \- `Success`: maps and replaces local {{feature}}, then updates cache metadata.
+     * \- `Error`: returns a failure with the remote code and message.
+     *
+     * @param cacheKey Cache key for {{feature}}.
+     * @param cacheStatus Current cache status, including validity and `ETag`.
+     * @return `RenEcommerceResult.Success(Unit)` when synchronization or cache renewal succeeds;
+     * `RenEcommerceResult.Error` when the remote request fails.
+     */
+    private suspend fun update{{Feature}}(
+        cacheKey: String,
+        cacheStatus: CacheStatus
+    ): RenEcommerceResult<Unit> {
+        return when (val remoteResult = remoteDataSource.fetch{{Feature}}(eTag = cacheStatus.eTag)) {
+            is RemoteResult.NotModified -> {
+                cacheManager.updateCache(
+                    key = cacheKey,
+                    expirationTimeMillis = CachePolicy.{{CACHE_KEY}}_TTL,
+                    eTag = cacheStatus.eTag
+                )
+                RenEcommerceResult.Success(Unit)
+            }
+
+            is RemoteResult.Success -> {
+                val entities = remoteResult.data.map { {{entity}}Mapper.to{{Entity}}(it) }
+
+                {{entity}}Dao.replace{{Feature}}(
+                    items = entities
+                )
+
+                cacheManager.updateCache(
+                    key = cacheKey,
+                    expirationTimeMillis = CachePolicy.{{CACHE_KEY}}_TTL,
+                    eTag = remoteResult.eTag
+                )
+                RenEcommerceResult.Success(Unit)
+            }
+
+            is RemoteResult.Error -> {
+                RenEcommerceResult.Error(
+                    exception = Exception("Error ${remoteResult.code}: ${remoteResult.message}")
+                )
+            }
+        }
+    }
+}
+/** endregion implementation */

@@ -1,0 +1,31 @@
+package com.reneprojects.core.feature.{{feature}}.local.dao
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Transaction
+import com.reneprojects.core.feature.{{feature}}.local.entity.{{Entity}}
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+internal interface {{EntityName}}Dao {
+    @Query("SELECT * FROM {{table}}")
+    fun observe{{Feature}}(): Flow<List<{{Entity}}>>
+
+    @Query("SELECT * FROM {{table}}")
+    suspend fun get{{Feature}}(): List<{{Entity}}>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert{{Feature}}(items: List<{{Entity}}>)
+
+    @Query("DELETE FROM {{table}}")
+    suspend fun delete{{Feature}}()
+
+    // Transactional replace: observers never see a half-written table.
+    @Transaction
+    suspend fun replace{{Feature}}(items: List<{{Entity}}>) {
+        delete{{Feature}}()
+        insert{{Feature}}(items = items)
+    }
+}
